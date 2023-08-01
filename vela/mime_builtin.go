@@ -1,0 +1,23 @@
+package vela
+
+const (
+	NIL     = string("nil")
+	BYTES   = string("[]uint8")
+	STRING  = string("string")
+	BOOL    = string("bool")
+	FLOAT64 = string("float64")
+	FLOAT32 = string("float32")
+	INT8    = string("int8")
+	INT16   = string("int16")
+	INT     = string("int")
+	INT32   = string("int32")
+	INT64   = string("int64")
+	UINT8   = string("uint8")
+	UINT16  = string("uint16")
+	UINT    = string("uint")
+	UINT32  = string("uint32")
+	UINT64  = string("uint64")
+	ERROR   = string("error")
+	TIME    = string("time.Time")
+	EXPIRE  = string("expire")
+)
