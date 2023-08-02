@@ -5,7 +5,6 @@ import (
 	arp "github.com/vela-ssoc/vela-arp"
 	awk "github.com/vela-ssoc/vela-awk"
 	capture "github.com/vela-ssoc/vela-capture"
-	chameleon "github.com/vela-ssoc/vela-chameleon"
 	component "github.com/vela-ssoc/vela-component"
 	cond "github.com/vela-ssoc/vela-cond"
 	console "github.com/vela-ssoc/vela-console"
@@ -13,6 +12,7 @@ import (
 	crack "github.com/vela-ssoc/vela-crack"
 	crontab "github.com/vela-ssoc/vela-crontab"
 	crypto "github.com/vela-ssoc/vela-crypto"
+	cvs "github.com/vela-ssoc/vela-cvs"
 	disk "github.com/vela-ssoc/vela-disk"
 	vdns "github.com/vela-ssoc/vela-dns"
 	elastic "github.com/vela-ssoc/vela-elastic"
@@ -91,7 +91,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	fasthttp.WithEnv(xEnv)
 	request.WithEnv(xEnv)
 	osquery.WithEnv(xEnv)
-	chameleon.WithEnv(xEnv)
 	component.WithEnv(xEnv)
 	vdns.WithEnv(xEnv)
 	crontab.WithEnv(xEnv)
@@ -108,6 +107,7 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	extract.WithEnv(xEnv)
 	sbom.WithEnv(xEnv)
 	arp.WithEnv(xEnv)
+	cvs.WithEnv(xEnv)
 }
 
 func (dly *Deploy) with(xEnv vela.Environment) {

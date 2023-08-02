@@ -57,7 +57,7 @@ func (sp *ScanPool) Get(name string) *scanTask {
 }
 
 func (tt *TaskTree) visit(callback func(key string, s *scanTask) bool) {
-	tt.scans.Range(func(key, value any) bool {
+	tt.scans.Range(func(key, value interface{}) bool {
 		var ok bool
 
 		s, ok := value.(*scanTask)
