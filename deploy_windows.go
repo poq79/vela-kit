@@ -7,7 +7,6 @@ import (
 	capture "github.com/vela-ssoc/vela-capture"
 	component "github.com/vela-ssoc/vela-component"
 	cond "github.com/vela-ssoc/vela-cond"
-	console "github.com/vela-ssoc/vela-console"
 	cpu "github.com/vela-ssoc/vela-cpu"
 	crack "github.com/vela-ssoc/vela-crack"
 	crontab "github.com/vela-ssoc/vela-crontab"
@@ -27,21 +26,12 @@ import (
 	ifconfig "github.com/vela-ssoc/vela-ifconfig"
 	ip2region "github.com/vela-ssoc/vela-ip2region"
 	kfk "github.com/vela-ssoc/vela-kfk"
-	"github.com/vela-ssoc/vela-kit/hashmap"
-	"github.com/vela-ssoc/vela-kit/mime"
-	"github.com/vela-ssoc/vela-kit/node"
-	"github.com/vela-ssoc/vela-kit/plugin"
-	"github.com/vela-ssoc/vela-kit/require"
-	"github.com/vela-ssoc/vela-kit/shared"
-	"github.com/vela-ssoc/vela-kit/tasktree"
-	"github.com/vela-ssoc/vela-kit/thread"
 	"github.com/vela-ssoc/vela-kit/vela"
 	logon "github.com/vela-ssoc/vela-logon"
 	memory "github.com/vela-ssoc/vela-memory"
 	vnet "github.com/vela-ssoc/vela-net"
 	osquery "github.com/vela-ssoc/vela-osquery"
 	process "github.com/vela-ssoc/vela-process"
-	psnotify "github.com/vela-ssoc/vela-psnotify"
 	registry "github.com/vela-ssoc/vela-registry"
 	request "github.com/vela-ssoc/vela-request"
 	risk "github.com/vela-ssoc/vela-risk"
@@ -62,7 +52,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 		return
 	}
 	vela.WithEnv(xEnv)
-	console.WithEnv(xEnv)
 	awk.WithEnv(xEnv)
 	crypto.WithEnv(xEnv)
 	file.WithEnv(xEnv)
@@ -87,7 +76,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	cond.WithEnv(xEnv)
 	tail.WithEnv(xEnv)
 	fsnotify.WithEnv(xEnv)
-	psnotify.WithEnv(xEnv)
 	fasthttp.WithEnv(xEnv)
 	request.WithEnv(xEnv)
 	osquery.WithEnv(xEnv)
@@ -108,38 +96,4 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	sbom.WithEnv(xEnv)
 	arp.WithEnv(xEnv)
 	cvs.WithEnv(xEnv)
-}
-
-func (dly *Deploy) with(xEnv vela.Environment) {
-	if dly.use == nil {
-		return
-	}
-	dly.use(xEnv)
-}
-
-func (dly *Deploy) base(xEnv vela.Environment) {
-	mime.Constructor(xEnv)
-	tasktree.Constructor(xEnv)
-	plugin.Constructor(xEnv)
-	node.Constructor(xEnv)
-	shared.Constructor(xEnv)
-	require.Constructor(xEnv)
-	hashmap.Constructor(xEnv)
-	thread.Constructor(xEnv)
-}
-
-func (dly *Deploy) define() func(vela.Environment) {
-	return func(xEnv vela.Environment) {
-		//default inject module
-		vela.WithEnv(xEnv)
-
-		//base
-		dly.base(xEnv)
-
-		//all
-		dly.withAll(xEnv)
-
-		//custom injection
-		dly.with(xEnv)
-	}
 }

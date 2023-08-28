@@ -90,9 +90,12 @@ func (env *Environment) invoke() {
 			return fmt.Errorf("invalid runtime object")
 		}
 
-		env.rtm = v
-		return nil
+		if m, ok := v.(monitor); ok {
+			env.rtm = m
+			return nil
+		}
 
+		return fmt.Errorf("invalid monitor object")
 	})
 
 	webdav.Constructor(env)

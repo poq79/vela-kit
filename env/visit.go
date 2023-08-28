@@ -6,11 +6,26 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 func (env *Environment) Hide() tunnel.RawHide {
 	return env.hide
+}
+
+func (env *Environment) CPU() float64 {
+	if env.rtm == nil {
+		return 0
+	}
+
+	return env.rtm.CPU()
+}
+
+func (env *Environment) AgentCPU() float64 {
+	if env.rtm == nil {
+		return 0
+	}
+
+	return env.rtm.AgentCPU()
 }
 
 func (env *Environment) Exe() (string, error) {
@@ -73,24 +88,11 @@ func (env *Environment) TunnelInfo() (string, string) {
 	return URL.Hostname(), URL.Port()
 }
 
-func (env *Environment) QuietOn() {
-	if env.Quiet() {
-		return
-	}
-
-	env.quiet = time.Now().Unix()
-}
-
 func (env *Environment) Quiet() bool {
-	if env.quiet <= 0 {
+	if env.rtm == nil {
 		return false
 	}
 
-	now := time.Now().Unix()
+	return env.rtm.Quiet()
 
-	if now-env.quiet < 3600 {
-		return true
-	}
-
-	return false
 }

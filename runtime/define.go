@@ -3,6 +3,7 @@ package runtime
 import (
 	"container/ring"
 	"encoding/json"
+	"fmt"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/vela-ssoc/vela-kit/vela"
@@ -83,8 +84,37 @@ func (m *monitor) define(r vela.Router) {
 		return helper(rb.agent.mem, ctx)
 	}))
 
-	r.GET("/api/v1/arr/debug/pprof/{pprof:*}", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+	r.GET("/api/v1/arr/pprof/index", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
 		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Index)(ctx)
+		return nil
+	}))
+
+	r.GET("/api/v1/arr/pprof/cmdline", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Cmdline)(ctx)
+		return nil
+	}))
+
+	r.GET("/api/v1/arr/pprof/profile", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Profile)(ctx)
+		return nil
+	}))
+
+	r.GET("/api/v1/arr/pprof/symbol", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Symbol)(ctx)
+		return nil
+	}))
+
+	r.GET("/api/v1/arr/pprof/trace", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Trace)(ctx)
+		return nil
+	}))
+	r.GET("/api/v1/arr/pprof/{name:*}", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		uv := ctx.UserValue("name")
+		name, ok := uv.(string)
+		if !ok {
+			return fmt.Errorf("not found name")
+		}
+		fasthttpadaptor.NewFastHTTPHandlerFunc(pprof.Handler(name).ServeHTTP)(ctx)
 		return nil
 	}))
 }

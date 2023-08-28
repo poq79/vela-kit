@@ -34,6 +34,11 @@ func (m *Map) Byte() []byte {
 	enc := Json(m.Len())
 	enc.Tab("")
 	for k, v := range m.entry {
+		if v == nil {
+			enc.KV(k, nil)
+			continue
+		}
+
 		switch v.Type() {
 		case LTInt:
 			enc.KV(k, int(v.(LInt)))

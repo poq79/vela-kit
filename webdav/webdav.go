@@ -200,4 +200,9 @@ func Constructor(env vela.Environment) {
 	r.POST("/api/v1/arr/webdav/ls", xEnv.Then(ls))
 	r.GET("/api/v1/arr/webdav/cat", xEnv.Then(cat))
 	r.DELETE("/api/v1/arr/webdav", xEnv.Then(remove))
+	r.GET("/api/v1/arr/agent/install", xEnv.Then(func(ctx *fasthttp.RequestCtx) error {
+		ctx.WriteString("ok")
+		ctx.SetStatusCode(200)
+		return nil
+	}))
 }

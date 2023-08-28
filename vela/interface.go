@@ -51,7 +51,6 @@ type NodeByEnv interface {
 	LocalAddr() string
 	RemoteAddr() string
 	Ident() tunnel.Ident
-	QuietOn()
 	Quiet() bool
 }
 
@@ -72,6 +71,8 @@ type auxiliary interface {
 	Adt() interface{}                //审计对象
 	Store(string, interface{})       //存储对象
 	Find(string) (interface{}, bool) //发现对象
+	CPU() float64                    //获取CPU
+	AgentCPU() float64               //获取Agent的CPU
 	Context() context.Context        //全局context
 }
 

@@ -151,6 +151,8 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 		ProcNumber:  int(hi.Procs),
 		Arch:        runtime.GOARCH,
 		CpuCore:     runtime.NumCPU(),
+		CpuPct:      xEnv.CPU(),
+		AgentCPU:    xEnv.AgentCPU(),
 	}
 
 	if e := v.Mem(); e != nil {
@@ -159,10 +161,6 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 
 	if e := v.Swap(); e != nil {
 		xEnv.Errorf("node swap info got fail %v", e)
-	}
-
-	if e := v.Cpu(); e != nil {
-		xEnv.Errorf("node cpu info got fail %v", e)
 	}
 
 	if e := v.Agt(); e != nil {

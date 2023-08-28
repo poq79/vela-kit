@@ -197,6 +197,8 @@ func (enc *JsonEncoder) kv2(key, v string) {
 
 func (enc *JsonEncoder) KV(key string, s interface{}) {
 	switch val := s.(type) {
+	case nil:
+		enc.kv1(key, "null")
 	case bool:
 		enc.kv1(key, strconv.FormatBool(val))
 	case float64:

@@ -40,7 +40,7 @@ func defaultConfig() *config {
 		MaxBackups: 100,
 		MaxAge:     180,
 		Compress:   false,
-		Console:    false,
+		Console:    xEnv.IsDebug(),
 		Caller:     true,
 		Skip:       1,
 		Format:     FormatText,

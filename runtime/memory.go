@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Min = uint64(50) * 1024 * 1024
+	Min = uint64(200) * 1024 * 1024
 	Max = uint(500) * 1024 * 1024
 )
 

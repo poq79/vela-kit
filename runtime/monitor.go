@@ -38,6 +38,12 @@ var rb = &RingBuffer{
 	},
 }
 
+type Cache struct {
+	CPU   float64
+	Agent float64
+	Quiet time.Time
+}
+
 type monitor struct {
 	doing    uint32
 	counter  uint32
@@ -47,9 +53,9 @@ type monitor struct {
 	CPUTimes []cpu.TimesStat
 	AgentCpu uint
 	AgentMem uint
-
-	Day    int
-	Action string
+	State    Cache
+	Day      int
+	Action   string
 }
 
 func (m *monitor) Index(L *lua.LState, key string) lua.LValue {
@@ -94,14 +100,32 @@ func (m *monitor) NewIndex(L *lua.LState, key string, val lua.LValue) {
 	}
 }
 
+func (m *monitor) Disable() {
+	now := time.Now()
+	if now.Unix()-m.State.Quiet.Unix() > 3600 {
+		m.State.Quiet = time.Now()
+		return
+	}
+	m.State.Quiet = time.Now()
+}
+
+func (m *monitor) Quiet() bool {
+	now := time.Now().Unix()
+
+	if now-m.State.Quiet.Unix() < 3600 {
+		return true
+	}
+	return false
+}
+
 func (m *monitor) Decision() {
 	switch m.Action {
 	case "exit":
 		os.Exit(-1)
 	case "quiet":
-		xEnv.QuietOn()
+		m.Disable()
 	default:
-		xEnv.QuietOn()
+		//xEnv.QuietOn()
 	}
 }
 
@@ -111,15 +135,11 @@ func (m *monitor) AgentAlloc() {
 
 	if info.Alloc > m.Memory {
 		audit.Errorf("memory overflow %d > %d", info.Alloc, m.Memory).From("runtime").Log().Put()
-		m.Decision()
+		debug.FreeOSMemory()
 	}
 }
 
 func (m *monitor) store(key string, v float64) {
-	//if m.counter%30 != 0 {
-	//	return
-	//}
-
 	r := &Record{
 		ID:    time.Now().Unix(),
 		Value: v,
@@ -127,12 +147,14 @@ func (m *monitor) store(key string, v float64) {
 
 	switch key {
 	case "os.cpu":
+		m.State.CPU = v
 		rb.os.cpu.Value = r
 		rb.os.cpu = rb.os.cpu.Next()
 	case "os.mem":
 		rb.os.mem.Value = r
 		rb.os.mem = rb.os.mem.Next()
 	case "agent.cpu":
+		m.State.Agent = v //agent cpu
 		rb.agent.cpu.Value = r
 		rb.agent.cpu = rb.agent.cpu.Next()
 	case "agent.mem":
@@ -161,12 +183,7 @@ func (m *monitor) Cpu() {
 	}
 
 	//xEnv.Errorf("cpu avg:%v    max:%v    usage:%v", avg(ret), max(ret), ret)
-	m.store("os.cpu", ret[0])
-
-	if uint(ret[0]) > m.CPU {
-		audit.Errorf("cpu overflow %d > %d", uint(ret[0]), m.CPU).From("runtime").Log().Put()
-		m.Decision()
-	}
+	m.store("os.cpu", ret[0]/5.0)
 }
 
 func (m *monitor) Mem() {
@@ -191,21 +208,13 @@ func (m *monitor) Agent() {
 	if err != nil {
 		xEnv.Errorf("ps agent cpu percent fail %v", err)
 	}
+
 	m.store("agent.cpu", cpct)
-
-	if uint(cpct) > m.AgentCpu {
-		m.Decision()
-	}
-
 	mpct, err := p.MemoryPercent()
 	if err != nil {
 		xEnv.Errorf("ps agent mem percent fail %v", err)
 	}
-
 	m.store("agent.mem", float64(mpct))
-	if uint(mpct) > m.AgentMem {
-		m.Decision()
-	}
 }
 
 func (m *monitor) inc() {
@@ -232,6 +241,10 @@ func (m *monitor) Chance(r *ring.Ring, e float64, h float64) bool { // 120次 , 
 		}
 	})
 
+	if total < 120 {
+		return false
+	}
+
 	if float64(exceed)/float64(total) > h {
 		return true
 	}
@@ -239,19 +252,15 @@ func (m *monitor) Chance(r *ring.Ring, e float64, h float64) bool { // 120次 , 
 	return false
 }
 
-func (m *monitor) free() {
-	if m.counter%86400 != 0 {
-		return
-	}
-	debug.FreeOSMemory()
-}
-
 func (m *monitor) exec() bool {
-	if m.Chance(rb.agent.cpu, 0.1, 0.7) {
+
+	if m.Chance(rb.agent.cpu, 20, 0.7) {
+		audit.Errorf("agent.cpu overflow  2min").From("runtime").Log().Put()
 		m.Decision()
 	}
 
-	if m.Chance(rb.os.mem, float64(Max), 0.8) {
+	if m.Chance(rb.agent.mem, float64(Min), 0.8) {
+		audit.Errorf("agent.mem overflow 150M 2min").From("runtime").Log().Put()
 		m.Decision()
 	}
 
@@ -259,7 +268,7 @@ func (m *monitor) exec() bool {
 }
 
 func (m *monitor) task() {
-	tk := time.NewTicker(time.Second)
+	tk := time.NewTicker(5 * time.Second)
 	defer tk.Stop()
 	for {
 		select {
@@ -273,7 +282,6 @@ func (m *monitor) task() {
 			m.Cpu()
 			m.Mem()
 			m.exec()
-			m.free()
 		}
 	}
 

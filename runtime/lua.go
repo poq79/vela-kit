@@ -20,6 +20,7 @@ func Constructor(env vela.Environment, callback func(v interface{}) error) {
 	}
 	m.define(xEnv.R())
 	go m.task()
+	callback(m)
 
 	rtv := lua.NewUserKV()
 	rtv.Set("code", lua.NewFunction(codeL))

@@ -9,6 +9,10 @@ import (
 	"io"
 )
 
+type Call interface {
+	PCall(v ...interface{}) error
+}
+
 func (px *Chains) Len() int {
 	return len(px.chain)
 }
@@ -68,6 +72,8 @@ func (px *Chains) Preprocess(v interface{}) Fn {
 
 	case lua.Console:
 		return px.Console(item)
+	case Call:
+		return item.PCall
 
 	case func():
 		return func(...interface{}) error {

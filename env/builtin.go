@@ -26,6 +26,12 @@ type onConnectEv struct {
 	todo func() error
 }
 
+type monitor interface {
+	Quiet() bool
+	CPU() float64
+	AgentCPU() float64
+}
+
 type Environment struct {
 	ctx  context.Context
 	stop context.CancelFunc
@@ -39,7 +45,7 @@ type Environment struct {
 	tnl         tunnel.Tunneler        //版本2 tunnel
 	adt         *audit.Audit           //审计模块
 	vhu         *variable.Hub          //变量状态
-	rtm         interface{}            //runtime
+	rtm         monitor                //runtime
 	shm         shared                 //共享内存
 	mime        *MimeHub               //mime hub object
 	third       third.VelaThird        //third 三方存储
@@ -49,7 +55,6 @@ type Environment struct {
 	router      *rtable.TnlRouter //存储注册路由信息
 	hide        tunnel.RawHide
 	onReconnect *pipe.Chains
-	quiet       int64
 }
 
 func with(env *Environment) {
