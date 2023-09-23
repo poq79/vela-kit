@@ -163,28 +163,29 @@ func (m *monitor) store(key string, v float64) {
 	}
 }
 
-func (m *monitor) Cpu() {
-	t2, err := cpu.Times(false)
-	if err != nil {
-		return
-	}
-
-	t1 := m.CPUTimes
-	m.CPUTimes = t2
-
-	if len(t1) == 0 {
-		return
-	}
-
-	ret, err := CalculateAllBusy(t1, t2)
-	if err != nil {
-		xEnv.Errorf("calculate cpu fail %v", err)
-		return
-	}
-
-	//xEnv.Errorf("cpu avg:%v    max:%v    usage:%v", avg(ret), max(ret), ret)
-	m.store("os.cpu", ret[0]/5.0)
-}
+// 弃用, 系统时间计算和Agent时间一起算, 在agent()函数中实现
+//func (m *monitor) Cpu() {
+//	t2, err := cpu.Times(false)
+//	if err != nil {
+//		return
+//	}
+//
+//	t1 := m.CPUTimes
+//	m.CPUTimes = t2
+//
+//	if len(t1) == 0 {
+//		return
+//	}
+//
+//	ret, err := CalculateAllBusy(t1, t2)
+//	if err != nil {
+//		xEnv.Errorf("calculate cpu fail %v", err)
+//		return
+//	}
+//
+//	//xEnv.Errorf("cpu avg:%v    max:%v    usage:%v", avg(ret), max(ret), ret)
+//	m.store("os.cpu", ret[0])
+//}
 
 func (m *monitor) Mem() {
 	mi, err := mem.VirtualMemory()
@@ -204,12 +205,22 @@ func (m *monitor) Agent() {
 		return
 	}
 
-	cpct, err := p.CPUPercent()
+	//cpct, err := p.CPUPercent()
+	//if err != nil {
+	//	xEnv.Errorf("ps agent cpu percent fail %v", err)
+	//}
+	//m.store("agent.cpu", cpct)
+	//cpct, err := AgentCpu(int32(os.Getpid()))
+	//systemCpuUsage, currentProcessCpuUsage, err := GetCurrentProcessCPUpct(nil)
+
+	systemCpuUsage, currentProcessCpuUsage, err := GetCurrentProcessCPUpct()
+
 	if err != nil {
 		xEnv.Errorf("ps agent cpu percent fail %v", err)
 	}
 
-	m.store("agent.cpu", cpct)
+	m.store("os.cpu", systemCpuUsage)
+	m.store("agent.cpu", currentProcessCpuUsage)
 	mpct, err := p.MemoryPercent()
 	if err != nil {
 		xEnv.Errorf("ps agent mem percent fail %v", err)
@@ -279,7 +290,7 @@ func (m *monitor) task() {
 			m.inc()
 			m.Agent()
 			m.AgentAlloc()
-			m.Cpu()
+			//m.Cpu()
 			m.Mem()
 			m.exec()
 		}

@@ -2,14 +2,15 @@ package node
 
 import (
 	"encoding/json"
+	"os"
+	"runtime"
+
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/process"
 	"github.com/valyala/fasthttp"
-	"os"
-	"runtime"
-	"time"
+	vruntime "github.com/vela-ssoc/vela-kit/runtime"
 )
 
 type Info struct {
@@ -77,12 +78,12 @@ func (i *Info) Cpu() error {
 	}
 	i.CpuInfo = v
 
-	pct, err := cpu.Percent(500*time.Millisecond, false)
-	if err != nil {
-		return err
-	}
+	//pct, err := cpu.Percent(500*time.Millisecond, false)
+	//if err != nil {
+	//	return err
+	//}
 
-	i.AgentCPU = pct[0]
+	//i.CpuPct = pct[0]
 	return nil
 }
 
@@ -92,13 +93,17 @@ func (i *Info) Agt() error {
 	if err != nil {
 		return err
 	}
-
-	cpu, err := agt.CPUPercent()
+	//cpu, err := agt.CPUPercent()
+	// 实时请求的接口,采集时间不固定, 就不单独做一次采集了, 直接读历史数据(5秒内)
+	// 本来就不准, 而且还干扰正常定时采集的数据
+	systemCpuUsage, currentProcessCpuUsage, err := vruntime.GetCurrentProcessCPUpctLatest()
 	if err != nil {
 		xEnv.Errorf("agent process got cpu percent fail %v", err)
 	}
-	i.CpuPct = cpu
-
+	i.CpuPct = systemCpuUsage
+	i.AgentCPU = currentProcessCpuUsage
+	// fmt.Printf("systemCpu:%.2f%%  Agt PID %d,cpu:%.2f%%\n", systemCpuUsage, pid, currentProcessCpuUsage)
+	// fmt.Println("Agt PID", pid)
 	mem, err := agt.MemoryInfo()
 	if err != nil {
 		xEnv.Errorf("agent process got mem percent fail %v", err)
@@ -162,6 +167,11 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 	if e := v.Swap(); e != nil {
 		xEnv.Errorf("node swap info got fail %v", e)
 	}
+
+	// Agt()里面集成了系统cpu监控
+	//if e := v.Cpu(); e != nil {
+	//	xEnv.Errorf("node cpu info got fail %v", e)
+	//}
 
 	if e := v.Agt(); e != nil {
 		xEnv.Errorf("node agent info got fail %v", e)
