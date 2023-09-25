@@ -40,7 +40,7 @@ const (
 
 // sidTypeToString is a mapping of SID types to their string representations.
 var sidTypeToString = map[SIDType]string{
-	SidTypeUser:           "User",
+	SidTypeUser:           "utime",
 	SidTypeGroup:          "Group",
 	SidTypeDomain:         "Domain",
 	SidTypeAlias:          "Alias",

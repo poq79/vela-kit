@@ -201,7 +201,7 @@ func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 	case "Remote":
 		return L.NewFunction(ev.remoteL)
 
-	case "User":
+	case "utime":
 		return L.NewFunction(ev.userL)
 
 	case "Auth":
