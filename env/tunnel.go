@@ -157,8 +157,8 @@ func (env *Environment) Dev(lan string, vip string, edit string, host string) {
 
 	tnl, err := tunnel.Dial(env.Context(), tunnel.Hide{
 		Semver:   edit,
-		Ethernet: tunnel.Addresses{{Addr: lan, TLS: false}},
-		Internet: tunnel.Addresses{{Addr: vip, TLS: false}},
+		Ethernet: tunnel.Addresses{{Addr: lan, Name: host}},
+		Internet: tunnel.Addresses{{Addr: vip, Name: host}},
 	}, env.router.H2S(), tunnel.WithLogger(env), tunnel.WithInterval(time.Second*30), tunnel.WithNotifier(env))
 
 	if err != nil {

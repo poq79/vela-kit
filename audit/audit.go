@@ -37,7 +37,7 @@ func (adt *Audit) openFile() {
 	w := &lumberjack.Logger{
 		Filename: adt.cfg.file,
 		MaxSize:  1024 * 1024, //1G
-		MaxAge:   180,
+		MaxAge:   7,
 		Compress: false,
 	}
 

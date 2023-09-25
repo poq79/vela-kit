@@ -51,6 +51,7 @@ func Constructor(env vela.Environment, callback func(vela.Log) error) {
 	state.define(env)
 
 	env.Set("logger", lua.NewExport("lua.logger.export", lua.WithFunc(state.NewL), lua.WithIndex(state.Index)))
+	state.cfg.Console = xEnv.IsDebug()
 
 	//日志配置
 	if e := callback(state); e != nil {

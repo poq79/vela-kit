@@ -47,6 +47,7 @@ type Environment struct {
 	vhu         *variable.Hub          //变量状态
 	rtm         monitor                //runtime
 	shm         shared                 //共享内存
+	link        interface{}            //本地调用链接
 	mime        *MimeHub               //mime hub object
 	third       third.VelaThird        //third 三方存储
 	tupMutex    sync.Mutex             //并发锁

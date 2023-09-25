@@ -35,6 +35,12 @@ func (trr *TnlRouter) H2S() tun2.Server {
 	return trr.h2s()
 }
 
+func (trr *TnlRouter) Serve() *fasthttp.Server {
+	return &fasthttp.Server{Handler: func(ctx *fasthttp.RequestCtx) {
+		trr.router.Handler(ctx)
+	}}
+}
+
 func (trr *TnlRouter) Cli() http.Client {
 	return *trr.cli
 }
@@ -107,6 +113,12 @@ func (trr *TnlRouter) Bad(ctx *fasthttp.RequestCtx, code int, opt ...func(*probl
 	body, _ := json.Marshal(p)
 	ctx.Response.SetStatusCode(code)
 	ctx.Write(body)
+}
+
+func (trr *TnlRouter) Handler() func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
+		trr.router.Handler(ctx)
+	}
 }
 
 func (trr *TnlRouter) h2s() tun2.Server {

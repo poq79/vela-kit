@@ -20,6 +20,7 @@ type Router interface {
 	Handle(string, string, fasthttp.RequestHandler) error
 	Cli() http.Client
 	Call(url string, v interface{}) (*http.Response, error)
+	Handler() func(ctx *fasthttp.RequestCtx)
 }
 
 type HTTPStream interface {
