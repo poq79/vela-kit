@@ -2,7 +2,9 @@ package env
 
 import (
 	"context"
+	"github.com/vela-ssoc/vela-common-mba/definition"
 	"github.com/vela-ssoc/vela-kit/audit"
+	"github.com/vela-ssoc/vela-kit/denoise"
 	"github.com/vela-ssoc/vela-kit/env/sys"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
@@ -54,7 +56,7 @@ type Environment struct {
 	tuple       map[string]interface{} //存储一些关键信息
 	onConnect   []onConnectEv
 	router      *rtable.TnlRouter //存储注册路由信息
-	hide        tunnel.RawHide
+	hide        definition.MinionHide
 	onReconnect *pipe.Chains
 }
 
@@ -63,6 +65,7 @@ func with(env *Environment) {
 	//注入系统变量
 	sys.WithEnv(env)
 	proxy.WithEnv(env)
+	denoise.With(env)
 
 	//注入函数
 	env.Set("go", lua.NewFunction(env.thread))

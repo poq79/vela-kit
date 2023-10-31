@@ -53,11 +53,25 @@ func (nd *node) query(version string) string {
 func (nd *node) download(u string, save string) (string, error) {
 	attr, err := xEnv.Attachment(u)
 	if err == nil {
-		return attr.File(save)
+		hash, e := attr.File(save)
+		attr.Close()
+		return hash, e
 	}
 
 	tk := time.NewTicker(30 * time.Second)
 	defer tk.Stop()
+
+	ignore := func(err error) bool {
+		if err == nil {
+			return false
+		}
+		if e, ok := err.(*netutil.HTTPError); ok && e.Code == http.StatusTooManyRequests {
+			return true
+		}
+
+		xEnv.Errorf("download agent binary fail %v", err)
+		return false
+	}
 
 	failure := 0
 	for range tk.C {
@@ -67,13 +81,14 @@ func (nd *node) download(u string, save string) (string, error) {
 		}
 
 		attr, err = xEnv.Attachment(u)
-
-		if e, ok := err.(*netutil.HTTPError); ok && e.Code == http.StatusTooManyRequests {
+		if ignore(err) {
 			continue
 		}
 
 		if err == nil {
-			return attr.File(save)
+			hash, e := attr.File(save)
+			attr.Close()
+			return hash, e
 		}
 	}
 

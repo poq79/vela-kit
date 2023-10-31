@@ -22,6 +22,15 @@ func GetTotalUsedFds() int {
 	return -1
 }
 
+func Exist(name string) bool {
+	_, err := os.Stat(name)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
 func State(name string) (atime, mtime, ctime time.Time, size int64, err error) {
 	var fi os.FileInfo
 	fi, err = os.Stat(name)

@@ -228,7 +228,7 @@ func executable(output func(string, ...interface{})) string {
 	}
 
 	for _, path := range files {
-		_, hi, e := tunnel.ReadHide(path)
+		hi, e := tunnel.ReadHide(path)
 		if e == nil {
 			output(`"msg":"ssc %s binary code succeed %+v"`, path, hi)
 			return path

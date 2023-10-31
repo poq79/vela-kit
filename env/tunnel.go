@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/valyala/fasthttp"
+	"github.com/vela-ssoc/vela-common-mba/definition"
 	"github.com/vela-ssoc/vela-kit/problem"
 	"github.com/vela-ssoc/vela-kit/safecall"
 	"github.com/vela-ssoc/vela-kit/vela"
@@ -44,29 +45,43 @@ func (env *Environment) Oneway(path string, reader io.Reader, header http.Header
 	if env.tnl == nil {
 		return notFoundTnlE
 	}
-	return env.tnl.Oneway(env.Context(), path, reader, header)
+
+	ctx, cancel := context.WithTimeout(env.Context(), 10*time.Second)
+	defer cancel()
+
+	return env.tnl.Oneway(ctx, path, reader, header)
 }
 
 func (env *Environment) Fetch(path string, reader io.Reader, header http.Header) (*http.Response, error) {
 	if env.tnl == nil {
 		return nil, notFoundTnlE
 	}
-	return env.tnl.Fetch(env.Context(), path, reader, header)
+
+	ctx, cancel := context.WithTimeout(env.Context(), 10*time.Second)
+	defer cancel()
+
+	return env.tnl.Fetch(ctx, path, reader, header)
 }
 
 func (env *Environment) JSON(path string, data interface{}, result interface{}) error {
 	if env.tnl == nil {
 		return notFoundTnlE
 	}
-	return env.tnl.JSON(env.Context(), path, data, result)
+
+	ctx, cancel := context.WithTimeout(env.Context(), 10*time.Second)
+	defer cancel()
+
+	return env.tnl.JSON(ctx, path, data, result)
 }
 
 func (env *Environment) Push(path string, data interface{}) error {
 	if env.tnl == nil {
 		return notFoundTnlE
 	}
+	ctx, cancel := context.WithTimeout(env.Context(), 10*time.Second)
+	defer cancel()
 
-	return env.tnl.OnewayJSON(env.Context(), path, data)
+	return env.tnl.OnewayJSON(ctx, path, data)
 }
 
 func (env *Environment) Stream(ctx context.Context, path string, header http.Header) (*websocket.Conn, error) {
@@ -81,6 +96,7 @@ func (env *Environment) Attachment(addr string) (*tunnel.Attachment, error) {
 	if env.tnl == nil {
 		return nil, notFoundTnlE
 	}
+
 	return env.tnl.Attachment(env.Context(), addr)
 }
 
@@ -131,7 +147,7 @@ func (env *Environment) Worker() {
 		return
 	}
 
-	raw, hide, err := tunnel.ReadHide(exe)
+	hide, err := tunnel.ReadHide(exe)
 	if err != nil {
 		env.Errorf("executable read binary hide info fail %v", err)
 		env.Kill(os.Kill)
@@ -139,7 +155,7 @@ func (env *Environment) Worker() {
 		return
 	}
 
-	env.Debugf("read hide raw %s", raw)
+	env.Errorf("read hide raw %s", hide.String())
 	tnl, err := tunnel.Dial(env.Context(), hide, env.router.H2S(), tunnel.WithLogger(env), tunnel.WithInterval(time.Second*30), tunnel.WithNotifier(env))
 
 	if err != nil {
@@ -148,17 +164,18 @@ func (env *Environment) Worker() {
 	}
 
 	env.tnl = tnl
-	env.hide = raw
+	env.hide = hide
 	env.startup()
 	after(env)
 }
 
 func (env *Environment) Dev(lan string, vip string, edit string, host string) {
 
-	tnl, err := tunnel.Dial(env.Context(), tunnel.Hide{
-		Semver:   edit,
-		Ethernet: tunnel.Addresses{{Addr: lan, Name: host}},
-		Internet: tunnel.Addresses{{Addr: vip, Name: host}},
+	tnl, err := tunnel.Dial(env.Context(), definition.MinionHide{
+		Edition:    edit,
+		LAN:        []string{lan},
+		VIP:        []string{vip},
+		Servername: host,
 	}, env.router.H2S(), tunnel.WithLogger(env), tunnel.WithInterval(time.Second*30), tunnel.WithNotifier(env))
 
 	if err != nil {

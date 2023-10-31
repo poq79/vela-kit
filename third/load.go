@@ -53,6 +53,7 @@ func (th *third) download(name string, hash string) (*vela.ThirdInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer att.Close()
 
 	info := &vela.ThirdInfo{
 		Dir:  th.dir,

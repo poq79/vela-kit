@@ -217,6 +217,7 @@ func (m *monitor) Agent() {
 
 	if err != nil {
 		xEnv.Errorf("ps agent cpu percent fail %v", err)
+		return
 	}
 
 	m.store("os.cpu", systemCpuUsage)

@@ -3,6 +3,7 @@ package vela
 import (
 	"context"
 	storm "github.com/asdine/storm/v3"
+	"github.com/vela-ssoc/vela-common-mba/definition"
 	"github.com/vela-ssoc/vela-kit/lua"
 	tunnel "github.com/vela-ssoc/vela-tunnel"
 	"go.etcd.io/bbolt"
@@ -46,7 +47,7 @@ type NodeByEnv interface {
 	Inet() string
 	Mac() string
 	Kernel() string
-	Hide() tunnel.RawHide
+	Hide() definition.MinionHide
 	Edition() string
 	LocalAddr() string
 	RemoteAddr() string

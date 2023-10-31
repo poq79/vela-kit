@@ -27,15 +27,15 @@ func owner(v os.FileInfo) (userName string, groupName string) {
 
 	u, err := user.LookupId(fmt.Sprint(s.Uid))
 	if err != nil {
-		xEnv.Errorf("not found file owner %s uid:%d", v.Name(), u.Uid)
+		xEnv.Errorf("not found file owner %s uid:%d", v.Name(), s.Uid)
 		userName = ""
 	} else {
 		userName = u.Username
 	}
 
-	group, err := user.LookupGroupId(fmt.Sprint(u.Gid))
+	group, err := user.LookupGroupId(fmt.Sprint(s.Gid))
 	if err != nil {
-		xEnv.Errorf("not found file group %s uid:%d", v.Name(), u.Uid)
+		xEnv.Errorf("not found file group %s uid:%d", v.Name(), s.Gid)
 		groupName = ""
 	} else {
 		groupName = group.Name

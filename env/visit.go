@@ -2,13 +2,13 @@ package env
 
 import (
 	"fmt"
-	tunnel "github.com/vela-ssoc/vela-tunnel"
+	"github.com/vela-ssoc/vela-common-mba/definition"
 	"net/url"
 	"os"
 	"path/filepath"
 )
 
-func (env *Environment) Hide() tunnel.RawHide {
+func (env *Environment) Hide() definition.MinionHide {
 	return env.hide
 }
 

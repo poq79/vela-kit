@@ -189,7 +189,7 @@ func executable(output func(string, ...interface{})) string {
 		return ""
 	}
 
-	if _, hi, e := tunnel.ReadHide(exe); e != nil {
+	if hi, e := tunnel.ReadHide(exe); e != nil {
 		output(`"msg":"ssc %s binary decode error %v"`, exe, e)
 		return ""
 	} else {
