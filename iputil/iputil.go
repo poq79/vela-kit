@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/projectdiscovery/utils/consts"
-	osutil "github.com/projectdiscovery/utils/os"
-	stringsutil "github.com/projectdiscovery/utils/strings"
+	"github.com/vela-ssoc/vela-kit/exception"
+	"github.com/vela-ssoc/vela-kit/osutil"
+	"github.com/vela-ssoc/vela-kit/strutil"
 	"go.uber.org/multierr"
 )
 
@@ -91,7 +91,7 @@ const ExtendIPDefaultPort = "80"
 // TryRealIP attemps to extend a host (ip, short ip, hostname) to its extended ip version
 func TryExtendIP(host string) (net.IP, error) {
 	if osutil.IsWindows() {
-		return nil, consts.ErrNotSupported
+		return nil, exception.ErrNotSupported
 	}
 	if _, _, err := net.SplitHostPort(host); err != nil {
 		host = net.JoinHostPort(host, ExtendIPDefaultPort)
@@ -182,12 +182,12 @@ func IsIPv6(ips ...interface{}) bool {
 		switch ipv := ip.(type) {
 		case string:
 			parsedIP := net.ParseIP(ipv)
-			isIP6 := parsedIP != nil && parsedIP.To16() != nil && stringsutil.ContainsAny(ipv, ":")
+			isIP6 := parsedIP != nil && parsedIP.To16() != nil && strutil.ContainsAny(ipv, ":")
 			if !isIP6 {
 				return false
 			}
 		case net.IP:
-			isIP6 := ipv != nil && ipv.To16() != nil && stringsutil.ContainsAny(ipv.String(), ":")
+			isIP6 := ipv != nil && ipv.To16() != nil && strutil.ContainsAny(ipv.String(), ":")
 			if !isIP6 {
 				return false
 			}
@@ -362,7 +362,7 @@ func ToFQDN(target string) ([]string, error) {
 	}
 
 	for i, name := range names {
-		names[i] = stringsutil.TrimSuffixAny(name, ".")
+		names[i] = strutil.TrimSuffixAny(name, ".")
 	}
 
 	return names, nil
