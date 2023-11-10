@@ -24,11 +24,8 @@ func require(L *lua.LState) int {
 }
 
 func Constructor(env vela.Environment) {
-	once.Do(func() {
-		xEnv = env
-		xEnv.Spawn(10, instance.sync)
-		xEnv.Register(instance)
-	})
-
+	xEnv = env
+	xEnv.Spawn(10, instance.sync)
+	xEnv.Register(instance)
 	env.Set("require", lua.NewFunction(require))
 }

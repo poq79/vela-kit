@@ -2,9 +2,13 @@ package third
 
 import (
 	"fmt"
+	"github.com/vela-ssoc/vela-common-mba/netutil"
 	"github.com/vela-ssoc/vela-kit/vela"
+	tunnel "github.com/vela-ssoc/vela-tunnel"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type thirdHttpReply struct {
@@ -47,13 +51,48 @@ func (th *third) success(info *vela.ThirdInfo) {
 	xEnv.Errorf("%s third update success info:%+v", info.Name, info)
 }
 
+func (th *third) Delay() {
+	delay := time.Second * 10
+	time.Sleep(delay)
+}
+
 // http 请求下载接口 name=aaa.lua&hash=123
-func (th *third) download(name string, hash string) (*vela.ThirdInfo, error) {
-	att, err := xEnv.Attachment(th.uri(name, hash))
-	if err != nil {
-		return nil, err
+func (th *third) download(name string, hash string, retry int) (*vela.ThirdInfo, error) {
+	uri := th.uri(name, hash)
+	var att *tunnel.Attachment
+	var err error
+
+	retryN := 0
+RETRY:
+	att, err = xEnv.Attachment(uri)
+	switch e := err.(type) {
+	case nil:
+		defer att.Close()
+
+	case *netutil.HTTPError:
+		switch e.Code {
+		case http.StatusNotFound:
+			return nil, err
+		case http.StatusTooManyRequests:
+			th.Delay()
+			goto RETRY
+		default:
+			if retryN > retry {
+				return nil, err
+			}
+			retryN++
+			th.Delay()
+			goto RETRY
+		}
+
+	default:
+		if retryN > retry {
+			return nil, err
+		}
+		retryN++
+		th.Delay()
+		goto RETRY
 	}
-	defer att.Close()
 
 	info := &vela.ThirdInfo{
 		Dir:  th.dir,
@@ -86,7 +125,7 @@ func (th *third) download(name string, hash string) (*vela.ThirdInfo, error) {
 }
 
 func (th *third) update(name string, checksum string) {
-	info, err := th.download(name, checksum) //hash=
+	info, err := th.download(name, checksum, 3) //hash=
 	if err != nil {
 		th.drop(info)
 		xEnv.Errorf("update %s third fail %+v hash=%s", info.Name, info, checksum)
@@ -100,11 +139,11 @@ func (th *third) uri(name string, hash string) string {
 }
 
 func (th *third) load(name string) (*vela.ThirdInfo, error) {
-	if len(name) == 0 {
+	if len(name) < 2 {
 		return nil, fmt.Errorf("invalid empty third name")
 	}
 
-	return th.download(name, "") //hash empty download
+	return th.download(name, "", 5) //hash empty download
 }
 
 func (th *third) Load(name string) (*vela.ThirdInfo, error) {

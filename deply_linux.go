@@ -8,7 +8,6 @@ import (
 	component "github.com/vela-ssoc/vela-component"
 	cond "github.com/vela-ssoc/vela-cond"
 	cpu "github.com/vela-ssoc/vela-cpu"
-	crack "github.com/vela-ssoc/vela-crack"
 	crontab "github.com/vela-ssoc/vela-crontab"
 	crypto "github.com/vela-ssoc/vela-crypto"
 	cvs "github.com/vela-ssoc/vela-cvs"
@@ -83,7 +82,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	vdns.WithEnv(xEnv)
 	crontab.WithEnv(xEnv)
 	kfk.WithEnv(xEnv)
-	crack.WithEnv(xEnv)
 	syslog.WithEnv(xEnv)
 	elastic.WithEnv(xEnv)
 	capture.WithEnv(xEnv)
