@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func (env *Environment) Hide() definition.MinionHide {
+func (env *Environment) Hide() definition.MHide {
 	return env.hide
 }
 

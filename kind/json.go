@@ -233,7 +233,7 @@ func LValueEncode(lv lua.LValue, enc *JsonEncoder) (err error) {
 	return nil
 }
 
-func Marshal(lv lua.LValue) ([]byte, error) {
+func MarshalJson(lv lua.LValue) ([]byte, error) {
 	enc := NewJsonEncoder()
 	err := LValueEncode(lv, enc)
 	if err != nil {

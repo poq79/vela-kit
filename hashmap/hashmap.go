@@ -3,8 +3,8 @@ package hashmap
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/vela-ssoc/vela-kit/vela"
 	"github.com/vela-ssoc/vela-kit/mime"
+	"github.com/vela-ssoc/vela-kit/vela"
 )
 
 var xEnv vela.Environment
@@ -16,7 +16,7 @@ func Encode(v interface{}) ([]byte, error) {
 }
 
 func Decode(chunk []byte) (interface{}, error) {
-	hm := newHashMap(0)
+	hm := New(0)
 	dnc := gob.NewDecoder(bytes.NewReader(chunk))
 	err := dnc.Decode(&hm)
 	if err != nil {
@@ -25,7 +25,7 @@ func Decode(chunk []byte) (interface{}, error) {
 	return hm, nil
 }
 
-func newHashMap(cap int) HMap {
+func New(cap int) HMap {
 	return make(HMap, cap)
 }
 

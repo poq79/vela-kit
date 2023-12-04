@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/valyala/fasthttp"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/webutil"
 	"net/http"
 	"path/filepath"
 	"reflect"
@@ -20,6 +21,7 @@ type config struct {
 }
 
 type LHandle struct {
+	hctx *webutil.HttpContext
 	lua.SuperVelaData
 	cfg      config
 	Callback func(*fasthttp.RequestCtx)
@@ -100,8 +102,9 @@ func (lh *LHandle) ToCall(L *lua.LState) int {
 		lh.Callback = func(ctx *fasthttp.RequestCtx) {
 			co := xEnv.Clone(lh.co)
 			defer xEnv.Free(co)
+			co.SetValue(webutil.WEB_CONTEXT_KEY, ctx)
 
-			err := co.CallByParam(pn, ctx2lv(ctx))
+			err := co.CallByParam(pn, lh.hctx)
 			if err != nil {
 				ctx.Error(err.Error(), http.StatusInternalServerError)
 				return
@@ -128,6 +131,7 @@ func (lh *LHandle) LFunc(L *lua.LState) *lua.LFunction {
 
 func (trr *TnlRouter) newHandleL(L *lua.LState, method string) lua.LValue {
 	lh := &LHandle{
+		hctx: webutil.NewContext(),
 		cfg: config{
 			method: method,
 		},

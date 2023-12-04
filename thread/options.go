@@ -13,9 +13,11 @@ func loadOptions(options ...Option) *Options {
 	return opts
 }
 
-// Options contains all options which will be applied when instantiating a ants pool.
+// Options contains all options which will be applied when instantiating an ants pool.
 type Options struct {
-	// ExpiryDuration sets the expired time of every worker.
+	// ExpiryDuration is a period for the scavenger goroutine to clean up those expired workers,
+	// the scavenger scans all workers every `ExpiryDuration` and clean up those workers that haven't been
+	// used for more than `ExpiryDuration`.
 	ExpiryDuration time.Duration
 
 	// PreAlloc indicates whether to make memory pre-allocation when initializing Pool.
@@ -33,6 +35,11 @@ type Options struct {
 	// PanicHandler is used to handle panics from each worker goroutine.
 	// if nil, panics will be thrown out again from worker goroutines.
 	PanicHandler func(interface{})
+
+	// Logger is the customized logger for logging info, if it is not set,
+	// default standard logger from log package is used.
+	// When DisablePurge is true, workers are not purged and are resident.
+	DisablePurge bool
 }
 
 // WithOptions accepts the whole options config.
@@ -74,5 +81,12 @@ func WithNonblocking(nonblocking bool) Option {
 func WithPanicHandler(panicHandler func(interface{})) Option {
 	return func(opts *Options) {
 		opts.PanicHandler = panicHandler
+	}
+}
+
+// WithDisablePurge indicates whether we turn off automatically purge.
+func WithDisablePurge(disable bool) Option {
+	return func(opts *Options) {
+		opts.DisablePurge = disable
 	}
 }

@@ -47,7 +47,7 @@ type NodeByEnv interface {
 	Inet() string
 	Mac() string
 	Kernel() string
-	Hide() definition.MinionHide
+	Hide() definition.MHide
 	Edition() string
 	LocalAddr() string
 	RemoteAddr() string

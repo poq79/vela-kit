@@ -56,7 +56,7 @@ type Environment struct {
 	tuple       map[string]interface{} //存储一些关键信息
 	onConnect   []onConnectEv
 	router      *rtable.TnlRouter //存储注册路由信息
-	hide        definition.MinionHide
+	hide        definition.MHide
 	onReconnect *pipe.Chains
 }
 

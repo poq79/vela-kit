@@ -3,15 +3,13 @@ package thread
 import "time"
 
 type workerStack struct {
-	items  []*goWorker
-	expiry []*goWorker
-	size   int
+	items  []worker
+	expiry []worker
 }
 
 func newWorkerStack(size int) *workerStack {
 	return &workerStack{
-		items: make([]*goWorker, 0, size),
-		size:  size,
+		items: make([]worker, 0, size),
 	}
 }
 
@@ -23,24 +21,25 @@ func (wq *workerStack) isEmpty() bool {
 	return len(wq.items) == 0
 }
 
-func (wq *workerStack) insert(worker *goWorker) error {
-	wq.items = append(wq.items, worker)
+func (wq *workerStack) insert(w worker) error {
+	wq.items = append(wq.items, w)
 	return nil
 }
 
-func (wq *workerStack) detach() *goWorker {
+func (wq *workerStack) detach() worker {
 	l := wq.len()
 	if l == 0 {
 		return nil
 	}
 
 	w := wq.items[l-1]
+	wq.items[l-1] = nil // avoid memory leaks
 	wq.items = wq.items[:l-1]
 
 	return w
 }
 
-func (wq *workerStack) retrieveExpiry(duration time.Duration) []*goWorker {
+func (wq *workerStack) refresh(duration time.Duration) []worker {
 	n := wq.len()
 	if n == 0 {
 		return nil
@@ -53,16 +52,18 @@ func (wq *workerStack) retrieveExpiry(duration time.Duration) []*goWorker {
 	if index != -1 {
 		wq.expiry = append(wq.expiry, wq.items[:index+1]...)
 		m := copy(wq.items, wq.items[index+1:])
+		for i := m; i < n; i++ {
+			wq.items[i] = nil
+		}
 		wq.items = wq.items[:m]
 	}
 	return wq.expiry
 }
 
 func (wq *workerStack) binarySearch(l, r int, expiryTime time.Time) int {
-	var mid int
 	for l <= r {
-		mid = (l + r) / 2
-		if expiryTime.Before(wq.items[mid].recycleTime) {
+		mid := l + ((r - l) >> 1) // avoid overflow when computing mid
+		if expiryTime.Before(wq.items[mid].lastUsedTime()) {
 			r = mid - 1
 		} else {
 			l = mid + 1
@@ -73,7 +74,8 @@ func (wq *workerStack) binarySearch(l, r int, expiryTime time.Time) int {
 
 func (wq *workerStack) reset() {
 	for i := 0; i < wq.len(); i++ {
-		wq.items[i].task <- nil
+		wq.items[i].finish()
+		wq.items[i] = nil
 	}
 	wq.items = wq.items[:0]
 }

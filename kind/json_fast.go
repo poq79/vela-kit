@@ -107,12 +107,6 @@ func (f *Fast) Meta(L *lua.LState, key lua.LValue) lua.LValue {
 	return f.visit(key.String())
 }
 
-func (f *Fast) setter(L *lua.LState, v *fastjson.Value) {
-	if v == nil {
-
-	}
-}
-
 func (f *Fast) NewIndex(L *lua.LState, key string, val lua.LValue) {
 	switch val.Type() {
 	case lua.LTNil:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/bucket"
+	"github.com/vela-ssoc/vela-kit/httpx"
 	"github.com/vela-ssoc/vela-kit/logger"
 	"github.com/vela-ssoc/vela-kit/rtable"
 	"github.com/vela-ssoc/vela-kit/runtime"
@@ -11,6 +12,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/variable"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"github.com/vela-ssoc/vela-kit/webdav"
+	"github.com/vela-ssoc/vela-kit/webutil"
 )
 
 func (env *Environment) invoke() {
@@ -86,4 +88,6 @@ func (env *Environment) invoke() {
 	})
 
 	webdav.Constructor(env)
+	webutil.Constructor(env)
+	httpx.WithEnv(env)
 }

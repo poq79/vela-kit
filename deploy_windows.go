@@ -32,7 +32,6 @@ import (
 	osquery "github.com/vela-ssoc/vela-osquery"
 	process "github.com/vela-ssoc/vela-process"
 	registry "github.com/vela-ssoc/vela-registry"
-	request "github.com/vela-ssoc/vela-request"
 	risk "github.com/vela-ssoc/vela-risk"
 	sbom "github.com/vela-ssoc/vela-sbom"
 	service "github.com/vela-ssoc/vela-service"
@@ -76,7 +75,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	tail.WithEnv(xEnv)
 	fsnotify.WithEnv(xEnv)
 	fasthttp.WithEnv(xEnv)
-	request.WithEnv(xEnv)
 	osquery.WithEnv(xEnv)
 	component.WithEnv(xEnv)
 	vdns.WithEnv(xEnv)

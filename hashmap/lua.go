@@ -11,14 +11,14 @@ func newLuaHashMap(L *lua.LState) int {
 	var hm HMap
 	switch val.Type() {
 	case lua.LTTable:
-		hm = newHashMap(0)
+		hm = New(0)
 		val.(*lua.LTable).Range(func(key string, val lua.LValue) {
 			hm.NewIndex(L, key, val)
 		})
 
 	default:
 		n, _ := val.AssertFloat64()
-		hm = newHashMap(int(n))
+		hm = New(int(n))
 	}
 	L.Push(hm)
 	return 1
@@ -27,5 +27,7 @@ func newLuaHashMap(L *lua.LState) int {
 func Constructor(env vela.Environment) {
 	xEnv = env
 	mime.Register((HMap)(nil), Encode, Decode)
-	env.Set("hm", lua.NewExport("lua.hashmap.export", lua.WithFunc(newLuaHashMap)))
+	xEnv.Set("hm", lua.NewExport("lua.hashmap.export", lua.WithFunc(newLuaHashMap)))
+	xEnv.Set("table", lua.NewExport("lua.table.global", lua.WithFunc(newLuaHashMap)))
+
 }

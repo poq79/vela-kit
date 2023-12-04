@@ -32,4 +32,7 @@ func Constructor(env vela.Environment, callback func(VelaThird) error) {
 
 	env.Set("third",
 		lua.NewExport("lua.third.export", lua.WithIndex(t.indexL), lua.WithFunc(t.loadL)))
+
+	env.Set("attach",
+		lua.NewExport("lua.third.export", lua.WithIndex(t.indexL), lua.WithFunc(t.loadL)))
 }

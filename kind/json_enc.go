@@ -169,6 +169,28 @@ func (enc *JsonEncoder) Join(key string, v []string) {
 	enc.WriteByte(',')
 }
 
+func (enc *JsonEncoder) NoKeyJoin(v []string) {
+	enc.Arr("")
+	for _, item := range v {
+		enc.Val(item)
+		enc.WriteByte(',')
+	}
+
+	enc.End("]")
+	enc.WriteByte(',')
+}
+
+func (enc *JsonEncoder) NoKeyJoin2(v []interface{}) {
+	enc.Arr("")
+	for _, item := range v {
+		enc.WriteString(auxlib.ToString(item))
+		enc.WriteByte(',')
+	}
+
+	enc.End("]")
+	enc.WriteByte(',')
+}
+
 func (enc *JsonEncoder) Join2(key string, v []interface{}) {
 	enc.Key(key)
 
@@ -192,6 +214,95 @@ func (enc *JsonEncoder) kv2(key, v string) {
 	enc.Key(key)
 	enc.Val(v)
 	enc.WriteByte(',')
+}
+
+func (enc *JsonEncoder) V1(v string) {
+	enc.WriteString(v)
+	enc.WriteByte(',')
+}
+
+func (enc *JsonEncoder) V2(v string) {
+	enc.Val(v)
+	enc.WriteByte(',')
+}
+
+func (enc *JsonEncoder) V(v interface{}) {
+	switch val := v.(type) {
+	case nil:
+		enc.V2("")
+
+	case bool:
+		enc.V1(strconv.FormatBool(val))
+	case float64:
+		enc.V1(strconv.FormatFloat(val, 'f', -1, 64))
+	case float32:
+		enc.V1(strconv.FormatFloat(float64(val), 'f', -1, 64))
+	case int:
+		enc.V1(strconv.Itoa(val))
+	case int64:
+		enc.V1(strconv.FormatInt(val, 10))
+	case int32:
+		enc.V1(strconv.Itoa(int(val)))
+
+	case int16:
+		enc.V1(strconv.FormatInt(int64(val), 10))
+	case int8:
+		enc.V1(strconv.FormatInt(int64(val), 10))
+	case uint:
+		enc.V1(strconv.FormatUint(uint64(val), 10))
+	case uint64:
+		enc.V1(strconv.FormatUint(val, 10))
+	case uint32:
+		enc.V1(strconv.FormatUint(uint64(val), 10))
+	case uint16:
+		enc.V1(strconv.FormatUint(uint64(val), 10))
+	case uint8:
+		enc.V1(strconv.FormatUint(uint64(val), 10))
+
+	case string:
+		enc.V2(val)
+
+	case lua.LString:
+		enc.V2(string(val))
+	case lua.LBool:
+		enc.V1(strconv.FormatBool(bool(val)))
+	case lua.LNilType:
+		enc.V2("nil")
+
+	case lua.LNumber:
+		enc.V1(strconv.FormatFloat(float64(val), 'f', -1, 64))
+	case lua.LInt:
+		enc.V1(strconv.Itoa(int(val)))
+
+	case []string:
+		enc.NoKeyJoin(val)
+	case []byte:
+		enc.V2(auxlib.B2S(val))
+
+	case []interface{}:
+		enc.NoKeyJoin2(val)
+
+	case time.Time:
+		if y := val.Year(); y < 0 || y >= 10000 {
+			// RFC 3339 is clear that years are 4 digits exactly.
+			// See golang.org/issue/4556#c15 for more discussion.
+
+			return
+			//return nil, errors.New("Time.MarshalJSON: year outside of range [0,9999]")
+		}
+		enc.V2(val.Format(time.RFC3339Nano))
+	case error:
+		enc.V2(val.Error())
+
+	default:
+		chunk, err := json.Marshal(val)
+		if err != nil {
+			return
+		}
+		enc.cache.Write(chunk)
+		enc.cache.WriteByte(',')
+	}
+
 }
 
 func (enc *JsonEncoder) KV(key string, s interface{}) {
@@ -262,10 +373,13 @@ func (enc *JsonEncoder) KV(key string, s interface{}) {
 	case error:
 		enc.kv2(key, val.Error())
 
+	case fmt.Stringer:
+		enc.kv2(key, val.String())
+
 	default:
 		chunk, err := json.Marshal(val)
 		if err != nil {
-			enc.KV(key, err.Error())
+			enc.kv2(key, err.Error())
 			return
 		}
 		enc.Raw(key, chunk)

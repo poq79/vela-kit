@@ -23,7 +23,6 @@ func (env *Environment) WithTaskTree(v interface{}) {
 		env.sub.task = tt
 		return
 	}
-
 	env.Errorf("invalid type task tree object to env , got %T", v)
 }
 

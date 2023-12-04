@@ -171,10 +171,8 @@ func (env *Environment) Worker() {
 
 func (env *Environment) Dev(lan string, vip string, edit string, host string) {
 
-	tnl, err := tunnel.Dial(env.Context(), definition.MinionHide{
-		Edition:    edit,
-		LAN:        []string{lan},
-		VIP:        []string{vip},
+	tnl, err := tunnel.Dial(env.Context(), definition.MHide{
+		Addrs:      []string{lan},
 		Servername: host,
 	}, env.router.H2S(), tunnel.WithLogger(env), tunnel.WithInterval(time.Second*30), tunnel.WithNotifier(env))
 

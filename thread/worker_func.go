@@ -23,7 +23,7 @@
 package thread
 
 import (
-	"runtime"
+	"runtime/debug"
 	"time"
 )
 
@@ -37,28 +37,27 @@ type goWorkerWithFunc struct {
 	// args is a job should be done.
 	args chan interface{}
 
-	// recycleTime will be update when putting a worker back into queue.
-	recycleTime time.Time
+	// lastUsed will be updated when putting a worker back into queue.
+	lastUsed time.Time
 }
 
 // run starts a goroutine to repeat the process
 // that performs the function calls.
 func (w *goWorkerWithFunc) run() {
-	w.pool.incRunning()
+	w.pool.addRunning(1)
 	go func() {
 		defer func() {
-			w.pool.decRunning()
+			w.pool.addRunning(-1)
 			w.pool.workerCache.Put(w)
 			if p := recover(); p != nil {
 				if ph := w.pool.options.PanicHandler; ph != nil {
 					ph(p)
 				} else {
-					log.Errorf("worker with func exits from a panic: %v\n", p)
-					var buf [4096]byte
-					n := runtime.Stack(buf[:], false)
-					log.Errorf("worker with func exits from panic: %s\n", string(buf[:n]))
+					xEnv.Errorf("worker exits from panic: %v\n%s\n", p, debug.Stack())
 				}
 			}
+			// Call Signal() here in case there are goroutines waiting for available workers.
+			w.pool.cond.Signal()
 		}()
 
 		for args := range w.args {
@@ -71,4 +70,20 @@ func (w *goWorkerWithFunc) run() {
 			}
 		}
 	}()
+}
+
+func (w *goWorkerWithFunc) finish() {
+	w.args <- nil
+}
+
+func (w *goWorkerWithFunc) lastUsedTime() time.Time {
+	return w.lastUsed
+}
+
+func (w *goWorkerWithFunc) inputFunc(func()) {
+	panic("unreachable")
+}
+
+func (w *goWorkerWithFunc) inputParam(arg interface{}) {
+	w.args <- arg
 }

@@ -82,8 +82,8 @@ func By(name string, use func(env vela.Environment)) {
 	deploy := constructor(name, use)
 
 	switch mode {
-	case "load":
-		Load(deploy)
+	//case "load":
+	//	Load(deploy)
 	case "start":
 		Start(deploy)
 	case "worker":
