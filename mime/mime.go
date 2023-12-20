@@ -2,8 +2,8 @@ package mime
 
 import (
 	"errors"
-	"github.com/vela-ssoc/vela-kit/vela"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/vela"
 	"reflect"
 	"sync"
 	"time"
@@ -70,6 +70,7 @@ func Constructor(env vela.Environment) {
 	env.Mime(uint32(0), conventionalEncodeFunc, uint32Decode)
 	env.Mime(uint64(0), conventionalEncodeFunc, uint64Decode)
 	env.Mime(time.Now(), conventionalEncodeFunc, timeDecode)
+	env.Mime(lua.LTable{}, LuaTableEncodeFunc, LuaTableDecodeFunc)
 	env.Mime(lua.LString(""), conventionalEncodeFunc, luaStringDecode)
 	env.Mime(lua.LBool(true), conventionalEncodeFunc, luaBoolDecode)
 	env.Mime(lua.LNumber(0), conventionalEncodeFunc, luaNumberDecode)

@@ -1,10 +1,14 @@
 package strutil
 
 import (
+	"crypto/md5"
+	b64 "encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"net"
+	"net/url"
 	"reflect"
 	"strings"
 	"unicode"
@@ -24,6 +28,19 @@ func String(v interface{}) string {
 
 func StringE(v interface{}) (string, error) {
 	return auxlib.ToStringE(v)
+}
+
+func Md5(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
+}
+
+func Bs64(text string) string {
+	return b64.StdEncoding.EncodeToString(S2B(text))
+}
+
+func URLEncode(text string) string {
+	return url.QueryEscape(text)
 }
 
 func S2B(s string) (b []byte) {
