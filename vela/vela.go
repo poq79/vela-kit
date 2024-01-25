@@ -1,14 +1,18 @@
 package vela
 
-import "fmt"
+import (
+	"github.com/vela-ssoc/vela-kit/stdutil"
+)
 
 func WithEnv(env Environment) {
-	if _G == nil {
+	once.Do(func() {
+		console := stdutil.New(stdutil.Console())
+		defer func() {
+			_ = console.Close()
+		}()
+
 		_G = env
-		fmt.Println("env constructor over..")
-		return
-	}
-	fmt.Println("env already running")
+	})
 }
 
 func GxEnv() Environment {

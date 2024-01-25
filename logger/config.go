@@ -42,7 +42,7 @@ func defaultConfig() *config {
 		Compress:   false,
 		Console:    true,
 		Caller:     true,
-		Skip:       1,
+		Skip:       2,
 		Format:     FormatText,
 	}
 }

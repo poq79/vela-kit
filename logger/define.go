@@ -3,26 +3,28 @@ package logger
 import (
 	"encoding/json"
 	"github.com/valyala/fasthttp"
-	"github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"github.com/vela-ssoc/vela-kit/vela"
 )
 
 func (z *zapState) startup(ctx *fasthttp.RequestCtx) error {
-	out, w := auxlib.Stdout()
-	defer w.Close()
+	out := stdutil.New(stdutil.Console())
+	defer func() {
+		_ = out.Close()
+	}()
 
-	out("start logger config change ...")
+	out.Info("start logger config change ...")
 	body := ctx.Request.Body()
 	var cfg config
 	err := json.Unmarshal(body, &cfg)
 	if err != nil {
-		out("start logger config json decode fail %s", string(body))
+		out.ERR("start logger config json decode fail %s", string(body))
 		return err
 	}
 
-	out("reload logger config %#v", cfg)
+	out.Info("reload logger config %#v", cfg)
 	z.reload(newZapState(&cfg))
-	out("start logger config reload succeed")
+	out.Info("start logger config reload succeed")
 	return nil
 }
 

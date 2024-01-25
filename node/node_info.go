@@ -77,13 +77,6 @@ func (i *Info) Cpu() error {
 		return err
 	}
 	i.CpuInfo = v
-
-	//pct, err := cpu.Percent(500*time.Millisecond, false)
-	//if err != nil {
-	//	return err
-	//}
-
-	//i.CpuPct = pct[0]
 	return nil
 }
 
@@ -169,9 +162,9 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 	}
 
 	// Agt()里面集成了系统cpu监控
-	//if e := v.Cpu(); e != nil {
-	//	xEnv.Errorf("node cpu info got fail %v", e)
-	//}
+	if e := v.Cpu(); e != nil {
+		xEnv.Errorf("node cpu info got fail %v", e)
+	}
 
 	if e := v.Agt(); e != nil {
 		xEnv.Errorf("node agent info got fail %v", e)

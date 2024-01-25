@@ -2,8 +2,8 @@ package agent
 
 import (
 	"fmt"
-	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/env"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,10 +25,8 @@ func SetEnv(cmd *exec.Cmd) {
 }
 
 func forkExec(fc *exec.Cmd) {
-	output, file := auxlib.Output()
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	output := stdutil.New(stdutil.Daemon())
+	defer output.Close()
 
 	//启动新的命令
 	cmd := exec.Cmd{
@@ -57,30 +55,23 @@ func forkExec(fc *exec.Cmd) {
 	SetEnv(&cmd)
 	//cmd.Env = append(os.Environ(), velaExecIdx+"=fork")
 
-	//控制文件输出
-	if file != nil {
-		cmd.Stderr = file
-		cmd.Stdout = file
-	}
-
 	//开始服务
 	if e := cmd.Start(); e != nil {
-		output(`"msg":"fork ssc error %s" , "exe":"%s" , "dir":"%s"`, e.Error(), cmd.Path, cmd.Dir)
+		output.ERR(`fork ssc error %s , exe:%s , dir:%s`, e.Error(), cmd.Path, cmd.Dir)
 		return
 	}
 
-	output(`"msg":"fork ssc pid %d" , "exe":"%s" , "dir":"%s"`, cmd.Process.Pid, cmd.Path, cmd.Dir)
+	output.Info(`fork ssc pid %d , exe:%s , dir:%s`, cmd.Process.Pid, cmd.Path, cmd.Dir)
 	*fc = cmd
 
 	//等待命令
 	if e := cmd.Wait(); e != nil {
-		output(`"msg":"fork ssc pid %d exit error %s" , "exe":"%s" , "dir":"%s"`,
+		output.ERR(`fork ssc pid %d exit error %s , exe:%s , dir:%s`,
 			e.Error(), cmd.Process.Pid, cmd.Path, cmd.Dir)
 		return
 	}
 
-	output(`"msg":"fork ssc pid %d exit" , "exe":"%s" , "dir":"%s"`, cmd.Process.Pid, cmd.Path, cmd.Dir)
-
+	output.Info(`msg:fork ssc pid %d exit , exe:%s , dir:%s`, cmd.Process.Pid, cmd.Path, cmd.Dir)
 	return
 }
 

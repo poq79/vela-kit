@@ -3,8 +3,8 @@ package agent
 import (
 	"fmt"
 	"github.com/shirou/gopsutil/process"
-	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/fileutil"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	tunnel "github.com/vela-ssoc/vela-tunnel"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -26,23 +26,23 @@ type program struct {
 	shutdown bool
 	cmd      exec.Cmd
 	fn       construct
-	output   func(string, ...interface{})
+	output   *stdutil.Output
 }
 
 func (p *program) stop() {
 	p.shutdown = true
 	if p.cmd.Process == nil {
-		p.output("not found ssc worker")
+		p.output.ERR("not found ssc worker")
 		return
 	}
 
 	err := p.cmd.Process.Kill()
 	if err != nil {
-		p.output("stop ssc worker fail %v", err)
+		p.output.ERR("stop ssc worker fail %v", err)
 		return
 	}
 
-	p.output("stop ssc worker succeed")
+	p.output.Info("stop ssc worker succeed")
 }
 
 func (p *program) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (sec bool, errno uint32) {
@@ -54,7 +54,7 @@ func (p *program) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 
 	for {
 		c := <-r
-		p.output("ssc service svc signal %v", c.Cmd)
+		p.output.ERR("ssc service svc signal %v", c.Cmd)
 		switch c.Cmd {
 		case svc.Interrogate:
 			s <- c.CurrentStatus
@@ -70,14 +70,12 @@ func (p *program) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 }
 
 func Install(_ construct) {
-	output, file := auxlib.Output()
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	output := stdutil.New(stdutil.Daemon())
+	defer output.Close()
 
 	conn, err := mgr.Connect()
 	if err != nil {
-		output(`"msg":"connet windows service error %v"`, err)
+		output.ERR(`connet windows service error %v`, err)
 		return
 	}
 
@@ -90,7 +88,7 @@ func Install(_ construct) {
 
 	exe, erx := os.Executable()
 	if erx != nil {
-		output(`"msg":"ssc filepath got fail %v"`, erx)
+		output.ERR(`ssc filepath got fail %v`, erx)
 		return
 	}
 
@@ -103,7 +101,7 @@ func Install(_ construct) {
 
 	ss, ers := conn.CreateService(name, exe, cfg, "service")
 	if ers != nil {
-		output(`"msg":"ssc create service error %v"`, ers)
+		output.ERR(`ssc create service error %v`, ers)
 		return
 	}
 	defer func() { _ = ss.Close() }()
@@ -111,12 +109,12 @@ func Install(_ construct) {
 	ras := []mgr.RecoveryAction{{Type: mgr.ServiceRestart, Delay: 5 * time.Second}}
 
 	if err = ss.SetRecoveryActions(ras, 0); err != nil {
-		output(`"msg":"ssc create recovery action %v"`, err)
+		output.ERR(`ssc create recovery action %v`, err)
 		return
 	}
 
 	eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
-	output(`"msg":"ssc install %s succeed"`, exe)
+	output.ERR(`ssc install %s succeed`, exe)
 }
 
 func Uninstall(_ construct) {
@@ -135,16 +133,14 @@ func Uninstall(_ construct) {
 }
 
 func Service(fn construct) {
-	output, file := auxlib.Output()
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	output := stdutil.New(stdutil.Daemon())
+	defer output.Close()
 
 	p := &program{fn: fn, shutdown: false, output: output}
 
 	ok, err := svc.IsWindowsService()
 	if err != nil {
-		p.output("ssc service not windows %v\n", err)
+		p.output.ERR("ssc service not windows %v", err)
 		return
 	}
 
@@ -154,11 +150,11 @@ func Service(fn construct) {
 
 	err = svc.Run(name, p)
 	if err == nil {
-		p.output("ssc service exit error %v\n", err)
+		p.output.ERR("ssc service exit error %v", err)
 		return
 	}
 
-	p.output("ssc service exit\n")
+	p.output.ERR("ssc service exit")
 	return
 
 }
@@ -207,17 +203,17 @@ func exeWalk(current string) []string {
 	return ret
 }
 
-func executable(output func(string, ...interface{})) string {
+func executable(output *stdutil.Output) string {
 	exe, err := os.Executable()
 	if err != nil {
-		output(`"msg":"ssc executable got fail %v"`, err)
+		output.ERR(`ssc executable got fail %v`, err)
 		return ""
 	}
 	current := filepath.Dir(exe)
 	files := exeWalk(current)
 
 	if len(files) == 0 {
-		output(`"msg":"not found ssc file"`)
+		output.ERR(`not found ssc file`)
 		return ""
 	}
 
@@ -230,12 +226,12 @@ func executable(output func(string, ...interface{})) string {
 	for _, path := range files {
 		hi, e := tunnel.ReadHide(path)
 		if e == nil {
-			output(`"msg":"ssc %s binary code succeed %+v"`, path, hi)
+			output.ERR(`ssc %s binary code succeed %+v`, path, hi)
 			return path
 		}
-		output(`"msg":"ssc %s binary decode error %v"`, path, e)
+		output.ERR(`ssc %s binary decode error %v`, path, e)
 	}
-	output(`"msg":"%+v not found valid ssc exe"`, files)
+	output.ERR(`%+v not found valid ssc exe`, files)
 	return ""
 }
 
@@ -244,23 +240,23 @@ func Exe() string {
 	return exe
 }
 
-func killall(output func(string, ...interface{})) {
+func killall(output *stdutil.Output) {
 	ps, err := process.Pids()
 	if err != nil {
-		output("not found process %v", err)
+		output.ERR("not found process %v", err)
 		return
 	}
 
 	for _, pid := range ps {
 		pr, er := process.NewProcess(pid)
 		if er != nil {
-			output("not found %d process %v", pid, er)
+			output.ERR("not found %d process %v", pid, er)
 			continue
 		}
 
 		pName, er := pr.Name()
 		if er != nil {
-			output("not found %d process name %v", pid, er)
+			output.ERR("not found %d process name %v", pid, er)
 			continue
 		}
 
@@ -273,7 +269,7 @@ func killall(output func(string, ...interface{})) {
 		}
 
 		if e := pr.Kill(); e != nil {
-			output("process %d %s kill fail %v", pid, pName, e)
+			output.ERR("process %d %s kill fail %v", pid, pName, e)
 		}
 	}
 }
@@ -326,34 +322,32 @@ func ControlService(name string, c svc.Cmd, to svc.State) error {
 }
 
 func Upgrade() {
-	output, file := auxlib.Upgrade()
-	if file != nil {
-		defer file.Close()
-	}
+	output := stdutil.New(stdutil.Upgrade())
+	defer output.Close()
 
-	output("ssc upgrade start ...")
+	output.Info("ssc upgrade start ...")
 	exe, err := os.Executable()
 	if err != nil {
-		output("executable %v", err)
+		output.ERR("executable %v", err)
 		return
 	}
 
 	err = ControlService(name, svc.Stop, svc.Stopped)
 	if err != nil {
-		output("control service fail %v", err)
+		output.ERR("control service fail %v", err)
 		return
 	}
 
-	output("sc stop scc succeed")
+	output.Info("sc stop scc succeed")
 	killall(output)
 
 	size, err := fileutil.CopyFile(exe, "ssc-mgt.exe")
 	if err != nil {
-		output("ssc-mgt.exe copy file fail %v", err)
+		output.ERR("ssc-mgt.exe copy file fail %v", err)
 		return
 	}
-	output("ssc-mgt.exe upgrade succeed size:%d", size)
+	output.Info("ssc-mgt.exe upgrade succeed size:%d", size)
 
 	StartService(name)
-	output("sc start scc succeed")
+	output.Info("sc start scc succeed")
 }

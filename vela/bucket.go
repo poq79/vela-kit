@@ -21,7 +21,7 @@ type Bucket interface {
 	Value(string) ([]byte, error)
 	Names() string
 	String() string
-	Clear() error
+	Clean() error
 	Encode(interface{}, int) ([]byte, error) //编码对应的数据
 	ReadOnly() Bucket
 }

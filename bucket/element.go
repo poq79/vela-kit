@@ -12,14 +12,14 @@ import (
 	"time"
 )
 
-type item struct {
+type element struct {
 	size  uint64
 	ttl   uint64
 	mime  string
 	chunk []byte
 }
 
-func (it *item) set(name string, chunk []byte, expire int) {
+func (elem *element) set(name string, chunk []byte, expire int) {
 	var ttl uint64
 
 	if expire > 0 {
@@ -29,31 +29,30 @@ func (it *item) set(name string, chunk []byte, expire int) {
 	}
 
 	//如果ttl 为空 第二次传值有时间
-	if it.ttl == 0 {
-		it.ttl = ttl
+	if elem.ttl == 0 {
+		elem.ttl = ttl
 	}
 
-	it.mime = name
-	it.size = uint64(len(name))
-	it.chunk = chunk
-
+	elem.mime = name
+	elem.size = uint64(len(name))
+	elem.chunk = chunk
 }
 
-func iEncode(it *item, v interface{}, expire int) error {
+func iEncode(elem *element, v interface{}, expire int) error {
 	chunk, name, err := mime.Encode(v)
 	if err != nil {
 		return err
 	}
-	it.set(name, chunk, expire)
+	elem.set(name, chunk, expire)
 	return nil
 }
 
-func iDecode(it *item, data []byte) error {
+func iDecode(elem *element, data []byte) error {
 	n := len(data)
 	if n == 0 {
-		it.mime = vela.NIL
-		it.size = 3
-		it.chunk = nil
+		elem.mime = vela.NIL
+		elem.size = 3
+		elem.chunk = nil
 		return nil
 	}
 
@@ -73,55 +72,55 @@ func iDecode(it *item, data []byte) error {
 		name := data[16 : 16+size]
 		chunk := data[size+16:]
 
-		it.size = size
-		it.ttl = ttl
-		it.mime = auxlib.B2S(name)
-		it.chunk = chunk
+		elem.size = size
+		elem.ttl = ttl
+		elem.mime = auxlib.B2S(name)
+		elem.chunk = chunk
 		return nil
 	}
 
-	it.size = 3
-	it.mime = vela.EXPIRE
-	it.chunk = it.chunk[:0]
-	it.ttl = 0
+	elem.size = 3
+	elem.mime = vela.EXPIRE
+	elem.chunk = elem.chunk[:0]
+	elem.ttl = 0
 	return nil
 }
 
-func (it item) Byte() []byte {
+func (elem element) Byte() []byte {
 	var buf bytes.Buffer
 	size := make([]byte, 8)
-	binary.BigEndian.PutUint64(size, it.size)
+	binary.BigEndian.PutUint64(size, elem.size)
 	buf.Write(size)
 
 	ttl := make([]byte, 8)
-	binary.BigEndian.PutUint64(ttl, it.ttl)
+	binary.BigEndian.PutUint64(ttl, elem.ttl)
 	buf.Write(ttl)
 
-	buf.WriteString(it.mime)
-	buf.Write(it.chunk)
+	buf.WriteString(elem.mime)
+	buf.Write(elem.chunk)
 	return buf.Bytes()
 }
 
-func (it item) Decode() (interface{}, error) {
-	if it.mime == "" {
+func (elem element) Decode() (interface{}, error) {
+	if elem.mime == "" {
 		return nil, fmt.Errorf("not found mime type")
 	}
 
-	if it.IsNil() {
+	if elem.IsNil() {
 		return nil, nil
 	}
 
-	return mime.Decode(it.mime, it.chunk)
+	return mime.Decode(elem.mime, elem.chunk)
 }
 
-func (it item) IsNil() bool {
-	return it.size == 0 || it.mime == vela.NIL || it.mime == vela.EXPIRE
+func (elem element) IsNil() bool {
+	return elem.size == 0 || elem.mime == vela.NIL || elem.mime == vela.EXPIRE
 }
 
-func (it *item) incr(v float64, expire int) (sum float64) {
-	num, err := it.Decode()
+func (elem *element) incr(v float64, expire int) (sum float64) {
+	num, err := elem.Decode()
 	if err != nil {
-		xEnv.Errorf("mime: %s chunk: %s decode fail", it.mime, it.chunk)
+		xEnv.Errorf("mime: %s chunk: %s decode fail", elem.mime, elem.chunk)
 		goto NEW
 	}
 
@@ -169,6 +168,6 @@ func (it *item) incr(v float64, expire int) (sum float64) {
 
 NEW:
 	chunk, name, _ := mime.Encode(sum)
-	it.set(name, chunk, expire)
+	elem.set(name, chunk, expire)
 	return
 }

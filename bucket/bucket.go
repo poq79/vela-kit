@@ -13,6 +13,6 @@ type Bucket struct {
 	export   string
 }
 
-func (bkt *Bucket) NewExpireQueue() *expireQueue {
-	return &expireQueue{db: bkt.dbx.ssc, chains: bkt.chains}
+func (bkt *Bucket) NewOverdue() *Overdue {
+	return &Overdue{db: bkt.dbx.ssc, chains: bkt.chains}
 }

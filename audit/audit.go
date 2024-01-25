@@ -7,11 +7,9 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"reflect"
-	"sync"
 )
 
 var (
-	once sync.Once
 	xEnv vela.Environment
 )
 
@@ -90,6 +88,7 @@ func (adt *Audit) inhibit(ev *Event) {
 
 func (adt *Audit) handle(ev *Event) {
 	adt.output(ev)
+
 	if adt.pass(ev) {
 		xEnv.Debugf("by pass ev %s %s %s", ev.from, ev.typeof, ev.msg)
 		return

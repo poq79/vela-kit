@@ -3,6 +3,7 @@ package kind
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/pretty"
 	auxlib "github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/buffer"
 	"github.com/vela-ssoc/vela-kit/lua"
@@ -229,7 +230,7 @@ func (enc *JsonEncoder) V2(v string) {
 func (enc *JsonEncoder) V(v interface{}) {
 	switch val := v.(type) {
 	case nil:
-		enc.V2("")
+		enc.V1("null")
 
 	case bool:
 		enc.V1(strconv.FormatBool(val))
@@ -308,7 +309,7 @@ func (enc *JsonEncoder) V(v interface{}) {
 func (enc *JsonEncoder) KV(key string, s interface{}) {
 	switch val := s.(type) {
 	case nil:
-		enc.kv2(key, "")
+		enc.kv1(key, "null")
 
 	case bool:
 		enc.kv1(key, strconv.FormatBool(val))
@@ -487,6 +488,13 @@ func (enc *JsonEncoder) End(val string) {
 
 func (enc *JsonEncoder) Bytes() []byte {
 	return enc.cache.Bytes()
+}
+
+func (enc *JsonEncoder) Json() []byte {
+	return enc.Bytes()
+}
+func (enc *JsonEncoder) PrettyJson() []byte {
+	return pretty.Pretty(enc.Json())
 }
 
 func (enc *JsonEncoder) Buffer() *buffer.Byte {

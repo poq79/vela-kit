@@ -12,11 +12,11 @@ import (
 var meta = map[string]*lua.LFunction{
 	"byte":   lua.NewFunction(bucketMetaByte),
 	"export": lua.NewFunction(bucketMetaExport),
-	"get":    lua.NewFunction(bucketMetaGet),
-	"set":    lua.NewFunction(bucketMetaSet),
-	"delete": lua.NewFunction(bucketMetaDelete),
+	"get":    lua.NewFunction(BktMetaGet),
+	"set":    lua.NewFunction(BktMetaSet),
+	"delete": lua.NewFunction(BktMetaDel),
 	"remove": lua.NewFunction(bucketMetaRemove),
-	"clear":  lua.NewFunction(bucketMetaClear),
+	"clear":  lua.NewFunction(BktMetaClean),
 	"pairs":  lua.NewFunction(bucketMetaPairs),
 	"info":   lua.NewFunction(bucketMetaInfo),
 	"count":  lua.NewFunction(bucketMetaCount),
@@ -26,7 +26,7 @@ var meta = map[string]*lua.LFunction{
 	"prefix": lua.NewFunction(bucketMetaPrefix),
 }
 
-func checkBucketValue(L *lua.LState, idx int) *Bucket {
+func CheckBucket(L *lua.LState, idx int) *Bucket {
 	obj := L.CheckObject(idx)
 
 	bkt, ok := obj.(*Bucket)
@@ -37,8 +37,8 @@ func checkBucketValue(L *lua.LState, idx int) *Bucket {
 	return nil
 }
 
-func bucketMetaGet(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+func BktMetaGet(L *lua.LState) int {
+	bkt := CheckBucket(L, 1)
 	key := L.CheckString(2)
 	it, err := bkt.Load(key)
 	if err != nil {
@@ -63,8 +63,8 @@ func bucketMetaGet(L *lua.LState) int {
 	return 1
 }
 
-func bucketMetaSet(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+func BktMetaSet(L *lua.LState) int {
+	bkt := CheckBucket(L, 1)
 	key := L.CheckString(2)
 	val := L.CheckAny(3)
 	expire := L.IsInt(4)
@@ -76,8 +76,8 @@ func bucketMetaSet(L *lua.LState) int {
 	return 0
 }
 
-func bucketMetaDelete(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+func BktMetaDel(L *lua.LState) int {
+	bkt := CheckBucket(L, 1)
 	n := L.GetTop()
 	if n <= 1 {
 		return 0
@@ -104,14 +104,14 @@ func bucketMetaDelete(L *lua.LState) int {
 	return 1
 }
 
-func bucketMetaClear(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
-	bkt.Clear()
+func BktMetaClean(L *lua.LState) int {
+	bkt := CheckBucket(L, 1)
+	_ = bkt.Clean()
 	return 0
 }
 
 func bucketMetaRemove(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	n := L.GetTop()
 	if n <= 1 {
 		return 0
@@ -138,10 +138,10 @@ func bucketMetaRemove(L *lua.LState) int {
 }
 
 func bucketMetaPairs(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	pip := pipe.NewByLua(L, pipe.Env(xEnv), pipe.Seek(1))
 
-	ee := bkt.NewExpireQueue()
+	od := bkt.NewOverdue()
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -149,14 +149,14 @@ func bucketMetaPairs(L *lua.LState) int {
 		}
 
 		err = bbt.ForEach(func(k, v []byte) error {
-			var it item
+			var it element
 			var er error
 			er = iDecode(&it, v)
 			if er != nil {
 				return nil
 			}
 
-			ee.IsExpire(auxlib.B2S(k), it)
+			od.IsExpire(auxlib.B2S(k), it)
 
 			if it.IsNil() {
 				er = pip.Call2(lua.B2L(k), lua.LNil, L)
@@ -179,13 +179,13 @@ func bucketMetaPairs(L *lua.LState) int {
 		L.Pushf("%v", err)
 		return 1
 	}
-	ee.clear()
+	od.clear()
 
 	return 0
 }
 
 func bucketMetaInfo(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -204,7 +204,7 @@ func bucketMetaInfo(L *lua.LState) int {
 }
 
 func bucketMetaCount(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -224,7 +224,7 @@ func bucketMetaCount(L *lua.LState) int {
 }
 
 func bucketMetaDepth(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -242,7 +242,7 @@ func bucketMetaDepth(L *lua.LState) int {
 }
 
 func bucketMetaIncr(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	key := L.CheckString(2)
 	val := L.CheckNumber(3)
 
@@ -256,7 +256,7 @@ func bucketMetaIncr(L *lua.LState) int {
 
 		b := lua.S2B(key)
 		data := bbt.Get(b)
-		it := &item{}
+		it := &element{}
 		err = iDecode(it, data)
 		if err != nil {
 			xEnv.Infof("incr %s decode fail error %v", key, err)
@@ -279,7 +279,7 @@ func bucketMetaIncr(L *lua.LState) int {
 }
 
 func bucketMetaExport(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	val, _ := L.Get(2).AssertString()
 	bkt.export = val
 	L.Push(bkt)
@@ -287,10 +287,10 @@ func bucketMetaExport(L *lua.LState) int {
 }
 
 func bucketMetaFixHelper(L *lua.LState, fn func([]byte, []byte) bool) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	fix := L.CheckString(2)
 	ret := L.CreateTable(32, 0)
-	ee := bkt.NewExpireQueue()
+	od := bkt.NewOverdue()
 
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
@@ -300,13 +300,13 @@ func bucketMetaFixHelper(L *lua.LState, fn func([]byte, []byte) bool) int {
 		i := 1
 
 		err = bbt.ForEach(func(k, v []byte) error {
-			it := item{}
+			it := element{}
 			er := iDecode(&it, v)
 			if er != nil {
 				xEnv.Errorf("invalid item error %v", er)
 				return nil
 			}
-			ee.IsExpire(auxlib.B2S(k), it)
+			od.IsExpire(auxlib.B2S(k), it)
 
 			if !fn(k, lua.S2B(fix)) {
 				return nil
@@ -328,7 +328,7 @@ func bucketMetaFixHelper(L *lua.LState, fn func([]byte, []byte) bool) int {
 		return err
 	})
 
-	ee.clear()
+	od.clear()
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.S2L(err.Error()))
@@ -347,7 +347,7 @@ func bucketMetaPrefix(L *lua.LState) int {
 }
 
 func bucketMetaByte(L *lua.LState) int {
-	bkt := checkBucketValue(L, 1)
+	bkt := CheckBucket(L, 1)
 	L.Push(lua.S2L(bkt.String()))
 	return 1
 }
@@ -357,21 +357,21 @@ func (bkt *Bucket) MetaTable(L *lua.LState, key string) lua.LValue {
 }
 
 func (bkt *Bucket) Index(L *lua.LState, key string) lua.LValue {
-	it, err := bkt.Load(key)
+	elem, err := bkt.Load(key)
 	if err != nil {
 		return lua.LNil
 	}
 
-	if it.IsNil() {
+	if elem.IsNil() {
 		return lua.LNil
 	}
 
-	val, err := it.Decode()
+	val, err := elem.Decode()
 	if err != nil {
 		return lua.LNil
 	}
 
-	return xreflect.ToLValue(val, L)
+	return lua.ToLValue(val)
 }
 
 func (bkt *Bucket) NewIndex(L *lua.LState, key string, val lua.LValue) {

@@ -2,8 +2,8 @@ package env
 
 import (
 	"fmt"
-	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"os"
 	"os/signal"
@@ -42,11 +42,10 @@ func (env *Environment) Register(cc vela.Closer) {
 }
 
 func (env *Environment) Kill(s os.Signal) {
-	output, file := auxlib.Output()
-
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	daemon := stdutil.New(stdutil.Daemon())
+	defer func() {
+		_ = daemon.Close()
+	}()
 
 	n := len(env.mbc)
 	if n == 0 {
@@ -56,9 +55,9 @@ func (env *Environment) Kill(s os.Signal) {
 	for i := 0; i < n; i++ {
 		c := env.mbc[i]
 		if e := c.Close(); e != nil {
-			output(`"msg":"%s exit fail %v"`, c.Name(), e)
+			daemon.ERR("%s exit fail %v", c.Name(), e)
 		} else {
-			output(`"msg":"exit %s by %v"`, c.Name(), s)
+			daemon.ERR("exit %v succeed signal %v", c.Name(), s)
 		}
 	}
 }

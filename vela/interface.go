@@ -13,7 +13,7 @@ import (
 
 var (
 	_G   Environment //缓存全局环境变量
-	once sync.Once   //控制设置次数
+	once sync.Once
 )
 
 type ScanByEnv interface {

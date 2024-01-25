@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/valyala/fasthttp"
 	"github.com/vela-ssoc/vela-common-mba/netutil"
-	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/fileutil"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -45,9 +44,8 @@ func (nd *node) startup(ctx *fasthttp.RequestCtx) error {
 	return nil
 }
 
-func (nd *node) query(version string) string {
-	q := url.Values{"version": []string{version}, "tags": xEnv.Tags()}
-	return fmt.Sprintf("/api/v1/broker/upgrade/download?%s", q.Encode())
+func (nd *node) query(u upgrade) string {
+	return fmt.Sprintf("/api/v1/broker/upgrade/download?%s", u.Query().Encode())
 }
 
 func (nd *node) download(u string, save string) (string, error) {
@@ -110,11 +108,11 @@ func (nd *node) daemon(exe string) error {
 }
 
 func (nd *node) upgrade(ctx *fasthttp.RequestCtx) error {
-	x, w := auxlib.Stdout()
-	defer w.Close()
+	out := stdutil.New(stdutil.Console())
+	defer out.Close()
 
 	if atomic.AddUint32(&nd.upgrading, 1) > 1 {
-		x("多次指令接收,正在升级......")
+		out.Info("多次指令接收,正在升级......")
 		return nil
 	}
 
@@ -123,21 +121,21 @@ func (nd *node) upgrade(ctx *fasthttp.RequestCtx) error {
 
 	err := json.Unmarshal(body, &up)
 	if err != nil {
-		x("upgrade unmarshal fail %v", err)
+		out.Info("upgrade unmarshal fail %v", err)
 		return err
 	}
 
-	x("upgrade ssc %#v", up)
+	out.Info("upgrade ssc %#v", up)
 
-	xEnv.Spawn(0, func() {
-		out, f := auxlib.Stdout()
-		defer f.Close()
+	err = xEnv.Spawn(0, func() {
+		out2 := stdutil.New(stdutil.Console())
+		defer out2.Close()
 
 		defer atomic.StoreUint32(&nd.upgrading, 0)
 
 		abs, er := xEnv.Exe()
 		if er != nil {
-			out("executable got fail %v", err)
+			out2.ERR("executable got fail %v", err)
 			return
 		}
 
@@ -154,40 +152,41 @@ func (nd *node) upgrade(ctx *fasthttp.RequestCtx) error {
 		// 只备份本次的二进制包, 历史备份二进制包不留存, 简单粗暴: 删除备份目录, 将本次二进制放到备份目录
 		er = fileutil.CreateIfNotExists(backDir, true)
 		if er != nil {
-			out("[消息] 失败备份当前二进制文件: %s ---> %s fail %v", abs, backName, er)
+			out2.ERR("失败备份当前二进制文件: %s ---> %s fail %v", abs, backName, er)
 			return
 		}
 
-		out("[消息] 开始备份当前二进制文件: %s ---> %s", abs, backName)
+		out2.Info("开始备份当前二进制文件: %s ---> %s", abs, backName)
 		n, er := fileutil.CopyFile(abs, backName)
 		if er != nil {
-			out("[失败] 开始备份当前二进制文件: %s ---> %s", abs, backName)
+			out2.ERR("开始备份当前二进制文件: %s ---> %s %v", abs, backName, er)
 			return
 		}
-		out("备份当前二进制成功: %s ---> %s size: %d", abs, backName, n)
+		out2.Info("备份当前二进制成功: %s ---> %s size: %d", abs, backName, n)
 		// 下载最新版本
 
 		save := filepath.Join(workdir, fmt.Sprintf("ssc-%d%s", time.Now().Unix(), ext))
 
-		_, er = nd.download(nd.query(up.Semver), save)
+		_, er = nd.download(nd.query(up), save)
 		if er != nil {
-			out("[失败] 下载文件失败 %v", up)
+			out2.ERR("下载文件失败 %v %v", up, er)
 			return
 		}
+		out2.Info("下载文件成功 %v", up)
 
 		info, er := os.Stat(save)
 		if er != nil || info.Size() < 4096 {
-			out("可执行程序未成功保存%v", er)
+			out2.ERR("可执行程序未成功保存%v", er)
 			return
 		}
 
 		er = nd.hot(save, abs, out)
 		if er != nil {
-			out("可执行程序执行失败%v", er)
+			out2.ERR("可执行程序执行失败%v", er)
 		}
 
 	})
-
+	out.ERR("upgrade spawn start fail %v", err)
 	return nil
 }
 

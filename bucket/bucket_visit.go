@@ -7,6 +7,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/mime"
+	"github.com/vela-ssoc/vela-kit/strutil"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"go.etcd.io/bbolt"
 	"strings"
@@ -20,7 +21,7 @@ func (bkt *Bucket) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (bkt *Bucket) Peek() lua.LValue                       { return bkt }
 
 func (bkt *Bucket) Encode(iv interface{}, expire int) ([]byte, error) {
-	it := &item{}
+	it := &element{}
 	err := iEncode(it, iv, expire)
 	if err != nil {
 		return nil, err
@@ -45,7 +46,7 @@ func (bkt *Bucket) BatchStore(v map[string]interface{}, expire int) error {
 		}
 
 		for key, iv := range v {
-			it := item{}
+			it := element{}
 			err = iEncode(&it, iv, expire)
 			if err != nil {
 				return err
@@ -63,7 +64,7 @@ func (bkt *Bucket) Store(key string, v interface{}, expire int) error {
 		if err != nil {
 			return err
 		}
-		var it item
+		var it element
 		err = iEncode(&it, v, expire)
 		if err != nil {
 			return err
@@ -74,9 +75,9 @@ func (bkt *Bucket) Store(key string, v interface{}, expire int) error {
 	return err
 }
 
-func (bkt *Bucket) Load(key string) (item, error) {
-	it := item{}
-	ee := bkt.NewExpireQueue()
+func (bkt *Bucket) Load(key string) (element, error) {
+	elem := element{}
+	od := bkt.NewOverdue()
 
 	err := bkt.dbx.ssc.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
@@ -85,18 +86,18 @@ func (bkt *Bucket) Load(key string) (item, error) {
 		}
 
 		data := bbt.Get(auxlib.S2B(key))
-		err = iDecode(&it, data)
+		err = iDecode(&elem, data)
 		return err
 	})
 
-	ee.IsExpire(key, it)
-	ee.clear()
+	od.IsExpire(key, elem)
+	od.clear()
 
 	if err != nil {
-		return it, err
+		return elem, err
 	}
 
-	return it, nil
+	return elem, nil
 }
 
 func (bkt *Bucket) Replace(key string, v interface{}, expire int) error {
@@ -113,7 +114,7 @@ func (bkt *Bucket) Replace(key string, v interface{}, expire int) error {
 			return err
 		}
 
-		var it item
+		var it element
 		err = iDecode(&it, data)
 		if err != nil {
 			it.set(name, chunk, expire)
@@ -145,7 +146,7 @@ func (bkt *Bucket) Ext() string {
 	return string(bkt.chains[n-1])
 }
 
-func (bkt *Bucket) Clear() error {
+func (bkt *Bucket) Clean() error {
 	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
 		n := len(bkt.chains)
 		switch n {
@@ -196,7 +197,7 @@ func (bkt *Bucket) Incr(key string, val int, expire int) (int, error) {
 
 		b := lua.S2B(key)
 		data := bbt.Get(b)
-		it := &item{}
+		it := &element{}
 		err = iDecode(it, data)
 		if err != nil {
 			xEnv.Infof("incr %s decode fail error %v", key, err)
@@ -314,7 +315,7 @@ func (bkt *Bucket) Push(key string, val []byte, expire int64) error {
 			ttl = uint64(time.Now().Unix() + expire)
 		}
 
-		it := item{
+		it := element{
 			mime:  vela.BYTES,
 			size:  uint64(len(vela.BYTES)),
 			ttl:   ttl,
@@ -325,7 +326,7 @@ func (bkt *Bucket) Push(key string, val []byte, expire int64) error {
 }
 
 func (bkt *Bucket) Value(key string) ([]byte, error) {
-	ee := bkt.NewExpireQueue()
+	od := bkt.NewOverdue()
 	it, err := bkt.Load(key)
 	if err != nil {
 		return nil, err
@@ -333,7 +334,7 @@ func (bkt *Bucket) Value(key string) ([]byte, error) {
 
 	switch it.mime {
 	case vela.EXPIRE:
-		ee.IsExpire(key, it)
+		od.IsExpire(key, it)
 		return nil, nil
 
 	case vela.NIL:
@@ -361,14 +362,14 @@ func (bkt *Bucket) Count() int {
 	return s.KeyN
 }
 func (bkt *Bucket) ForEach(fn func(string, []byte)) {
-	ee := bkt.NewExpireQueue()
+	od := bkt.NewOverdue()
 	err := bkt.dbx.ssc.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
 			return err
 		}
 		err = bbt.ForEach(func(k, data []byte) error {
-			var it item
+			var it element
 
 			e := iDecode(&it, data)
 			if e != nil {
@@ -377,7 +378,7 @@ func (bkt *Bucket) ForEach(fn func(string, []byte)) {
 			}
 			key := string(k)
 
-			ee.IsExpire(key, it)
+			od.IsExpire(key, it)
 
 			switch it.mime {
 			case "[]int8": //old mime
@@ -397,12 +398,11 @@ func (bkt *Bucket) ForEach(fn func(string, []byte)) {
 		return
 	}
 
-	ee.clear()
+	od.clear()
 }
 
 func (bkt *Bucket) Range(fn func(string, interface{})) {
-	ee := bkt.NewExpireQueue()
-
+	od := bkt.NewOverdue()
 	err := bkt.dbx.ssc.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -411,18 +411,18 @@ func (bkt *Bucket) Range(fn func(string, interface{})) {
 
 		err = bbt.ForEach(func(k, data []byte) error {
 
-			it := item{}
-			err = iDecode(&it, data)
+			elem := element{}
+			err = iDecode(&elem, data)
 			if err != nil {
-				xEnv.Errorf("bucket decode fail mime:%s size:%d %v", it.mime, it.size, err)
+				xEnv.Errorf("bucket decode fail mime:%s size:%d %v", elem.mime, elem.size, err)
 				return nil
 			}
 			key := string(k)
-			ee.IsExpire(key, it)
+			od.IsExpire(key, elem)
 
-			v, er := it.Decode()
+			v, er := elem.Decode()
 			if er != nil {
-				xEnv.Errorf("bucket decode fail mime:%s size:%d %v", it.mime, it.size, er)
+				xEnv.Errorf("bucket decode fail mime:%s size:%d %v", elem.mime, elem.size, er)
 				return nil
 			}
 
@@ -438,7 +438,7 @@ func (bkt *Bucket) Range(fn func(string, interface{})) {
 		return
 	}
 
-	ee.clear()
+	od.clear()
 }
 
 func (bkt *Bucket) Json() *Bucket {
@@ -458,9 +458,9 @@ func (bkt *Bucket) Names() string {
 func (bkt *Bucket) String() string {
 	switch bkt.export {
 	case "json":
-		return auxlib.B2S(bucketExportJson(bkt))
+		return strutil.B2S(Bkt2Json(bkt))
 	case "line":
-		return auxlib.B2S(bucketExportLine(bkt))
+		return strutil.B2S(Bkt2Line(bkt))
 	default:
 		return fmt.Sprintf("%p", bkt)
 	}

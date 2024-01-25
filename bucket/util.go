@@ -124,8 +124,8 @@ func Bkt2B(b *bbolt.Bucket, name []byte, readonly bool) (*bbolt.Bucket, error) {
 	return b.CreateBucketIfNotExists(name)
 }
 
-func bucketExportHelper(bkt *Bucket, fn func(string, interface{})) error {
-	ee := bkt.NewExpireQueue()
+func View(bkt *Bucket, fn func(string, interface{})) error {
+	od := bkt.NewOverdue()
 	err := xEnv.DB().View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
@@ -133,21 +133,21 @@ func bucketExportHelper(bkt *Bucket, fn func(string, interface{})) error {
 		}
 
 		err = bbt.ForEach(func(k, v []byte) error {
-			var it item
-			if e := iDecode(&it, v); e != nil {
+			var elem element
+			if e := iDecode(&elem, v); e != nil {
 				xEnv.Errorf("export json %s decode error %v", k, e)
 				return nil
 			}
-			ee.IsExpire(string(k), it)
+			od.IsExpire(string(k), elem)
 
-			switch it.mime {
+			switch elem.mime {
 			case vela.NIL:
 				return nil
 			case "lua.LNilType":
 				return nil
 			}
 
-			iv, ie := it.Decode()
+			iv, ie := elem.Decode()
 			if ie != nil {
 				xEnv.Errorf("export json %s to interface error %v", k, ie)
 				return nil
@@ -160,7 +160,7 @@ func bucketExportHelper(bkt *Bucket, fn func(string, interface{})) error {
 		return err
 	})
 
-	ee.clear()
+	od.clear()
 
 	if err != nil {
 		return err
@@ -169,10 +169,10 @@ func bucketExportHelper(bkt *Bucket, fn func(string, interface{})) error {
 	return nil
 }
 
-func bucketExportJson(bkt *Bucket) []byte {
+func Bkt2Json(bkt *Bucket) []byte {
 	buf := kind.NewJsonEncoder()
 	buf.Tab("")
-	err := bucketExportHelper(bkt, buf.KV)
+	err := View(bkt, buf.KV)
 	if err != nil {
 		xEnv.Errorf("export %v error %v", bkt, err)
 		return nil
@@ -186,7 +186,7 @@ func bucketExportJson(bkt *Bucket) []byte {
 	return buf.Bytes()
 }
 
-func bucketExportLine(bkt *Bucket) []byte {
+func Bkt2Line(bkt *Bucket) []byte {
 	var buf bytes.Buffer
 	fn := func(key string, v interface{}) {
 		buf.WriteString(key)
@@ -195,7 +195,7 @@ func bucketExportLine(bkt *Bucket) []byte {
 		buf.WriteByte('\n')
 	}
 
-	err := bucketExportHelper(bkt, fn)
+	err := View(bkt, fn)
 	if err != nil {
 		xEnv.Errorf("export %v error %v", bkt.chains, err)
 		return nil
@@ -205,7 +205,7 @@ func bucketExportLine(bkt *Bucket) []byte {
 }
 
 func decode(v []byte) (interface{}, error) {
-	var it item
+	var it element
 	err := iDecode(&it, v)
 	if err != nil {
 		return nil, err

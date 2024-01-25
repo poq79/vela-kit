@@ -7,6 +7,7 @@ import (
 	"fmt"
 	ps "github.com/shirou/gopsutil/process"
 	"github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"os"
 )
 
@@ -59,11 +60,11 @@ func NotUpgrade(exe string) bool {
 	return false
 }
 
-func (nd *node) hot(save, abs string, out func(string, ...interface{})) error {
+func (nd *node) hot(save, abs string, out *stdutil.Output) error {
 	if err := nd.daemon(save); err != nil {
-		out("升级主进程服务失败exe:%s 原因:%v", abs, err)
+		out.ERR("升级主进程服务失败exe:%s 原因:%v", abs, err)
 	}
-
+	out.ERR("开始推出当前工作进程")
 	os.Exit(0)
 	return nil
 }

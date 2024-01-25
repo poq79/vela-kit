@@ -39,6 +39,26 @@ func (sv *SuperVelaData) IsClose() bool {
 	return sv.Status == VTClose
 }
 
+func (sv *SuperVelaData) Succeed() {
+	sv.Status = VTRun
+	sv.Uptime = time.Now()
+}
+
+func (sv *SuperVelaData) Failed() {
+	sv.Status = VTErr
+	sv.Uptime = time.Now()
+}
+
+func (sv *SuperVelaData) Panic() {
+	sv.Status = VTPanic
+	sv.Uptime = time.Now()
+}
+
+func (sv *SuperVelaData) Closed() {
+	sv.Status = VTClose
+	sv.Uptime = time.Now()
+}
+
 func (sv *SuperVelaData) V(opts ...interface{}) {
 	for _, item := range opts {
 

@@ -65,6 +65,11 @@ func (db *Database) export(ctx *fasthttp.RequestCtx) error {
 
 	dbname := args.Peek("db")
 	bucket := args.Peek("pkt")
+	write := func(chunk string) error {
+		_, err := ctx.WriteString(chunk)
+		return err
+	}
+
 	if len(dbname) == 0 || len(bucket) == 0 {
 		return fmt.Errorf("not found db or bucket")
 	}
@@ -72,17 +77,14 @@ func (db *Database) export(ctx *fasthttp.RequestCtx) error {
 	switch string(dbname) {
 	case "ssc":
 		bkt := &Bucket{dbx: db, export: "json", chains: [][]byte{bucket}}
-		ctx.WriteString(bkt.String())
-		return nil
+		return write(bkt.String())
 
 	case "ssx":
 		bkt := &Bucket{dbx: db, export: "json", chains: [][]byte{bucket}}
-		ctx.WriteString(bkt.String())
-		return nil
+		return write(bkt.String())
 	default:
 		return fmt.Errorf("not found db")
 	}
-
 }
 
 func (db *Database) view(ctx *fasthttp.RequestCtx) error {

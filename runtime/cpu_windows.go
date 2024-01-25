@@ -13,27 +13,29 @@ var (
 	procGetProcessTimes = modkernel32.NewProc("GetProcessTimes")
 )
 
-type FILETIME struct {
+var (
+	latestCpuPct        float64
+	latestProcessCpuPct float64
+	m_agentCpuTime      int64 = 0
+
+	m_preidleTime   = FileTime{}
+	m_prekernelTime = FileTime{}
+	m_preuserTime   = FileTime{}
+)
+
+type FileTime struct {
 	dwLowDateTime  uint64
 	dwHighDateTime uint64
 }
 
-var latestCpuPct float64
-var latestProcessCpuPct float64
-
-var m_preidleTime = FILETIME{}
-var m_prekernelTime = FILETIME{}
-var m_preuserTime = FILETIME{}
-var m_agentCpuTime int64 = 0
-
-func CompareFileTime2(time1 FILETIME, time2 FILETIME) int64 {
+func CompareFileTime2(time1 FileTime, time2 FileTime) int64 {
 	a := int64((time1.dwHighDateTime)<<32 | time1.dwLowDateTime)
 	b := int64((time2.dwHighDateTime)<<32 | time2.dwLowDateTime)
 	return b - a
 }
 
 func GetCPUpct() (float64, error) {
-	var idleTime, kernelTime, userTime FILETIME
+	var idleTime, kernelTime, userTime FileTime
 
 	// 调用GetSystemTimes函数
 	ret, _, err := procGetSystemTimes.Call(
@@ -66,7 +68,7 @@ func GetCPUpct() (float64, error) {
 
 func GetCurrentProcessCPUpct() (float64, float64, error) {
 	// 获取系统cpu时间
-	var idleTime, kernelTime, userTime FILETIME
+	var idleTime, kernelTime, userTime FileTime
 
 	// 调用GetSystemTimes函数
 	ret, _, err := procGetSystemTimes.Call(
@@ -88,7 +90,7 @@ func GetCurrentProcessCPUpct() (float64, float64, error) {
 	defer syscall.CloseHandle(processHandle)
 
 	// 获取当前进程的 CPU 时间
-	var creationTimeAgent, exitTimeAgent, kernelTimeAgent, userTimeAgent FILETIME
+	var creationTimeAgent, exitTimeAgent, kernelTimeAgent, userTimeAgent FileTime
 
 	// 获取进程时间信息
 	err = syscall.GetProcessTimes(processHandle,

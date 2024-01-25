@@ -43,13 +43,12 @@ func (db *Database) index(L *lua.LState, key string) lua.LValue {
 func (db *Database) infoL(L *lua.LState) int {
 	tab := L.NewTable()
 	i := 0
-	db.ssc.View(func(tx *Tx) error {
-		tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+	_ = db.ssc.View(func(tx *Tx) error {
+		return tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
 			i++
 			tab.RawSetInt(i, lua.B2L(name))
 			return nil
 		})
-		return nil
 	})
 	L.Push(tab)
 	return 1
