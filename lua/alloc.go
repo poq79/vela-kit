@@ -71,7 +71,7 @@ func (al *allocator) LNumber2I(v LNumber) LValue {
 	fptr := &al.fptrs[len(al.fptrs)-1]
 
 	// hack our scratch LValue to point to our allocated value
-	// this scratch lvalue is copied when this function returns meaning the scratch value can be reused
+	// this scratch reflectx is copied when this function returns meaning the scratch value can be reused
 	// on the next call
 	al.scratchValueP.word = unsafe.Pointer(fptr)
 

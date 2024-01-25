@@ -1,7 +1,7 @@
 package node
 
 import (
-	"github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"os"
 )
 
@@ -107,24 +107,21 @@ func NotUpgrade(exe string) bool {
 	return false
 }
 
-func (nd *node) hot(save, abs string, out func(string, ...interface{})) error {
-	_, std := auxlib.Stdout()
-	defer std.Close()
-
+func (nd *node) hot(save, abs string, out *stdutil.Output) error {
 	//添加执行权限
 	if err := os.Chmod(save, 0755); err != nil {
-		out("chmod 文件%s错误: %v", abs, err)
+		out.ERR("chmod 文件%s错误: %v", abs, err)
 		return err
 	}
 
 	// 刚刚下载的文件覆盖掉运行的文件名
 	if err := os.Remove(abs); err != nil {
-		out("删除文件%s错误: %v", abs, err)
+		out.ERR("删除文件%s错误: %v", abs, err)
 		return err
 	}
 
 	if err := os.Rename(save, abs); err != nil {
-		out("升级包 %s -> %s 覆盖失败: %v", save, abs, err)
+		out.ERR("升级包 %s -> %s 覆盖失败: %v", save, abs, err)
 		return err
 	}
 

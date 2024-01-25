@@ -26,9 +26,12 @@ func (ls *LState) CheckObject(n int) LValue {
 	return lv
 }
 
+/*
 func (ls *LState) PushAny(v interface{}) {
 	ls.Push(ToLValue(v))
 }
+
+*/
 
 func (ls *LState) Pushf(format string, v ...interface{}) {
 	ls.Push(LString(fmt.Sprintf(format, v...)))

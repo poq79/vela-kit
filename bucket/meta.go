@@ -6,7 +6,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/exception"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
-	"github.com/vela-ssoc/vela-kit/xreflect"
+	"github.com/vela-ssoc/vela-kit/reflectx"
 )
 
 var meta = map[string]*lua.LFunction{
@@ -59,7 +59,7 @@ func BktMetaGet(L *lua.LState) int {
 		return 2
 	}
 
-	L.Push(xreflect.ToLValue(val, L))
+	L.Push(reflectx.ToLValue(val, L))
 	return 1
 }
 
@@ -316,7 +316,7 @@ func bucketMetaFixHelper(L *lua.LState, fn func([]byte, []byte) bool) int {
 				xEnv.Errorf("decode bucket item error %v", ie)
 				goto next
 			} else {
-				ret.RawSetInt(i, xreflect.ToLValue(iv, L))
+				ret.RawSetInt(i, reflectx.ToLValue(iv, L))
 				return nil
 			}
 
@@ -371,7 +371,7 @@ func (bkt *Bucket) Index(L *lua.LState, key string) lua.LValue {
 		return lua.LNil
 	}
 
-	return lua.ToLValue(val)
+	return reflectx.ToLValue(val, L)
 }
 
 func (bkt *Bucket) NewIndex(L *lua.LState, key string, val lua.LValue) {

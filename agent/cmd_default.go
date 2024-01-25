@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/kardianos/service"
 	"github.com/shirou/gopsutil/process"
-	"github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	tunnel "github.com/vela-ssoc/vela-tunnel"
 	"os"
 	"os/exec"
@@ -128,28 +128,25 @@ func Install(fn construct) {
 }
 
 func Uninstall(fn construct) {
-	output, file := auxlib.Output()
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	output := stdutil.New(stdutil.Console())
+	defer output.Close()
+
 	ss, err := newSSC(fn)
 	if err != nil {
-		output(`"msg":"ssc sensor service error %v"`, err)
+		output.ERR(`ssc sensor service error %v`, err)
 		return
 	}
 
 	if e := ss.Uninstall(); e != nil {
-		output(`"msg":"服务卸载失败%v"`, e)
+		output.ERR(`服务卸载失败%v`, e)
 		return
 	}
-	output(`"msg":"服务卸载成功"`)
+	output.ERR(`服务卸载成功`)
 }
 
 func Service(fn construct) {
-	output, file := auxlib.Output()
-	if file != nil {
-		defer func() { _ = file.Close() }()
-	}
+	output := stdutil.New(stdutil.Console())
+	defer output.Close()
 
 	/*
 		exe, err := os.Executable()
@@ -162,18 +159,18 @@ func Service(fn construct) {
 
 	ss, err := newSSC(fn)
 	if err != nil {
-		output("start ssc by service error %v", err)
+		output.ERR("start ssc by service error %v", err)
 		Start(fn)
 		return
 	}
 
 	err = ss.Run()
 	if err != nil {
-		output("run ssc by service error %v", err)
+		output.ERR("run ssc by service error %v", err)
 		return
 	}
 
-	output("ssc service exit")
+	output.ERR("ssc service exit")
 }
 
 func NewSysProcAttr() *syscall.SysProcAttr {
@@ -182,18 +179,18 @@ func NewSysProcAttr() *syscall.SysProcAttr {
 	}
 }
 
-func executable(output func(string, ...interface{})) string {
+func executable(output *stdutil.Output) string {
 	exe := Exe()
 	if exe == "" {
-		output(`"msg":"ssc executable got fail"`)
+		output.ERR(`ssc executable got fail`)
 		return ""
 	}
 
 	if hi, e := tunnel.ReadHide(exe); e != nil {
-		output(`"msg":"ssc %s binary decode error %v"`, exe, e)
+		output.ERR(`msg:ssc %s binary decode error %v`, exe, e)
 		return ""
 	} else {
-		output(`"msg":"ssc %s binary code succeed"`, hi)
+		output.ERR(`msg:ssc %s binary code succeed`, hi)
 		return exe
 	}
 }
@@ -233,14 +230,12 @@ func killall(exe string, output func(string, ...interface{})) {
 }
 
 func Upgrade() {
-	output, file := auxlib.Upgrade()
-	if file != nil {
-		defer file.Close()
-	}
+	output := stdutil.New(stdutil.Console())
+	defer output.Close()
 
 	exe, err := os.Executable()
 	if err != nil {
-		output("executable %v", err)
+		output.ERR("executable %v", err)
 		return
 	}
 
@@ -253,10 +248,10 @@ func Upgrade() {
 
 	err = cmd.Start()
 	if err != nil {
-		output("ssc upgrade daemon start fail %v", err)
+		output.ERR("ssc upgrade daemon start fail %v", err)
 		return
 	}
 
-	output("ssc upgrade daemon succeed pid:%d", cmd.Process.Pid)
+	output.ERR("ssc upgrade daemon succeed pid:%d", cmd.Process.Pid)
 	os.Exit(1)
 }

@@ -3,8 +3,8 @@ package tasktree
 import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/reflectx"
 	"github.com/vela-ssoc/vela-kit/vela"
-	"github.com/vela-ssoc/vela-kit/xreflect"
 )
 
 func (cd *Code) String() string                         { return lua.B2S(cd.chunk) }
@@ -76,7 +76,7 @@ func metadataL(L *lua.LState) int {
 
 	key := L.CheckString(1)
 
-	L.Push(xreflect.ToLValue(co.metadata[key], L))
+	L.Push(reflectx.ToLValue(co.metadata[key], L))
 	return 1
 }
 

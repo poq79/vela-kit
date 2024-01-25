@@ -3,7 +3,7 @@ package hashmap
 import (
 	"encoding/json"
 	"github.com/vela-ssoc/vela-kit/lua"
-	"github.com/vela-ssoc/vela-kit/xreflect"
+	"github.com/vela-ssoc/vela-kit/reflectx"
 )
 
 var hmMetaTab = map[string]lua.LValue{
@@ -47,7 +47,7 @@ func (hm HMap) NewMeta(L *lua.LState, key lua.LValue, val lua.LValue) {
 func (hm HMap) Index(L *lua.LState, key string) lua.LValue {
 	val, ok := hm[key]
 	if ok {
-		return xreflect.ToLValue(val, L)
+		return reflectx.ToLValue(val, L)
 	}
 	return lua.LNil
 }
@@ -85,7 +85,7 @@ func hmMetaRange(L *lua.LState) int {
 	defer xEnv.Free(co)
 
 	for k, v := range hm {
-		err := co.CallByParam(cp, lua.S2L(k), xreflect.ToLValue(v, L))
+		err := co.CallByParam(cp, lua.S2L(k), reflectx.ToLValue(v, L))
 		if err != nil {
 			xEnv.Errorf("hashmap range error %v", err)
 			return 0

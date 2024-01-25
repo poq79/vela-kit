@@ -1,8 +1,8 @@
 package shared
 
 import (
-	"github.com/vela-ssoc/vela-kit/xreflect"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/reflectx"
 	"time"
 )
 
@@ -49,7 +49,7 @@ func (shm *ShareBucket) LSet(L *lua.LState) int {
 func (shm *ShareBucket) LGet(L *lua.LState) int {
 	key := L.CheckString(1)
 	val, e := shm.bucket.Get(key)
-	L.Push(xreflect.ToLValue(val, L))
+	L.Push(reflectx.ToLValue(val, L))
 	if e == nil {
 		return 1
 	}

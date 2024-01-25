@@ -4,8 +4,8 @@ import (
 	"fmt"
 	auxlib "github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
+	lvalue "github.com/vela-ssoc/vela-kit/reflectx"
 	"github.com/vela-ssoc/vela-kit/vela"
-	"github.com/vela-ssoc/vela-kit/xreflect"
 	"io"
 )
 
@@ -145,7 +145,7 @@ func (px *Chains) LFunc(fn *lua.LFunction) Fn {
 
 		var args []lua.LValue
 		for _, item := range v {
-			args = append(args, xreflect.ToLValue(item, co))
+			args = append(args, lvalue.ToLValue(item, co))
 		}
 		defer px.xEnv.Free(co)
 

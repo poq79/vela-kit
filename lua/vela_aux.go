@@ -331,6 +331,12 @@ func NewFunction(gn LGFunction) *LFunction {
 	}
 }
 
+func NewUserData() *LUserData {
+	return &LUserData{
+		Metatable: LNil,
+	}
+}
+
 func CreateTable(acap, hcap int) *LTable {
 	return newLTable(acap, hcap)
 }

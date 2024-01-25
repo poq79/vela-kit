@@ -1,4 +1,4 @@
-package xreflect
+package reflectx
 
 import (
 	"fmt"

@@ -150,7 +150,8 @@ func (m *Map) keyL(L *LState) int {
 			i++
 		}
 	}
-	L.PushAny(keys[:i])
+	L.Push(ToLValue(keys[:i]))
+
 	return 1
 }
 
