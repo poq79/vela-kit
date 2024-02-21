@@ -1,6 +1,7 @@
 package strutil
 
 import (
+	"github.com/vela-ssoc/vela-kit/strutil/similarity"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -389,4 +390,18 @@ func TestIndexAny(t *testing.T) {
 		require.Equal(t, test.expectedIdx, idx)
 		require.Equal(t, test.expectedSep, sep)
 	}
+}
+
+func TestSimilarity(t *testing.T) {
+	similarity := Similarity("好你2", "你好1", similarity.NewProportion())
+	t.Log(similarity)
+}
+
+func TestS2R(t *testing.T) {
+	s := "你好11"
+
+	r := S2R(s)
+
+	t.Logf("%d", len(r))
+	t.Logf("%v", r[0])
 }

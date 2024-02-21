@@ -6,6 +6,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/bucket"
 	"github.com/vela-ssoc/vela-kit/httpx"
 	"github.com/vela-ssoc/vela-kit/logger"
+	"github.com/vela-ssoc/vela-kit/require"
 	"github.com/vela-ssoc/vela-kit/rtable"
 	"github.com/vela-ssoc/vela-kit/runtime"
 	"github.com/vela-ssoc/vela-kit/third"
@@ -62,6 +63,15 @@ func (env *Environment) invoke() {
 			return fmt.Errorf("third object already ok")
 		}
 		env.third = t
+		return nil
+	})
+
+	require.Constructor(env, func(p require.Pool) error {
+		if env.requireHub != nil {
+			return fmt.Errorf("require cache pool already ok")
+		}
+
+		env.requireHub = p
 		return nil
 	})
 

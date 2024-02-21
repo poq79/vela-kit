@@ -40,6 +40,9 @@ func Constructor(env vela.Environment, callback func(v interface{}) error) {
 	rtv.Set("linux", lua.LBool(goos == "linux"))
 
 	rtv.Set("monitor", lua.NewFunction(m.setL))
+
+	rtv.Set("max_open_file", lua.NewFunction(SetMaxOpenFileL))
+
 	env.Global("runtime", rtv)
 
 }

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_G   Environment //缓存全局环境变量
+	xEnv Environment //缓存全局环境变量
 	once sync.Once
 )
 

@@ -74,3 +74,7 @@ func (env *Environment) notifyL(L *lua.LState) int {
 	env.Notify()
 	return 0
 }
+
+func (env *Environment) disableL(L *lua.LState) int {
+	return 0
+}

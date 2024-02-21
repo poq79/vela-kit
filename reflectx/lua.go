@@ -228,7 +228,7 @@ func toArr(L *lua.LState, rv reflect.Value) *lua.LTable {
 	n := rv.Len()
 	tab := L.CreateTable(n, 0)
 	for i := 0; i < n; i++ {
-		tab.RawSetInt(i, ToLValue(rv.Index(i), L))
+		tab.RawSetInt(i+1, ToLValue(rv.Index(i), L))
 	}
 
 	return tab
@@ -279,7 +279,7 @@ func ToLValue(value interface{}, L *lua.LState) lua.LValue {
 		return lua.LNil
 	}
 
-	if lv, ok := defaultDataTypeToLValue(L, value); ok {
+	if lv, ok := CommTypeToLValue(L, value); ok {
 		return lv
 	}
 

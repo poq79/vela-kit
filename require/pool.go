@@ -12,6 +12,12 @@ type pool struct {
 	stop chan struct{}
 }
 
+type Pool interface {
+	RequireL(L *lua.LState, filename string) lua.LValue
+	Require(filename string) lua.LValue
+	Close() error
+}
+
 func newPool() *pool {
 	return &pool{stop: make(chan struct{}, 1)}
 }
@@ -32,7 +38,7 @@ func (p *pool) rUnlock() {
 	p.mu.RUnlock()
 }
 
-func (p *pool) get(filename string) lua.LValue {
+func (p *pool) get(filename string) *cache {
 	p.rLock()
 	defer p.rUnlock()
 
@@ -107,7 +113,7 @@ func (p *pool) flush() {
 }
 
 func (p *pool) sync() {
-	tk := time.NewTicker(3 * time.Second)
+	tk := time.NewTicker(2 * time.Second)
 	for {
 		select {
 		case <-tk.C:
@@ -119,14 +125,14 @@ func (p *pool) sync() {
 }
 
 func (p *pool) require(L *lua.LState, filename string) lua.LValue {
-	var data lua.LValue
+	var item *cache
 
-	data = p.get(filename)
-	if data != nil {
-		return data
+	item = p.get(filename)
+	if item != nil {
+		return item
 	}
 
-	item := &cache{co: L, name: filename, status: OOP}
+	item = &cache{co: L, name: filename, status: OOP}
 
 	err := item.load()
 	if err != nil {
@@ -145,4 +151,17 @@ func (p *pool) Close() error {
 
 func (p *pool) Name() string {
 	return "require.pool"
+}
+
+func (p *pool) RequireL(L *lua.LState, filename string) lua.LValue {
+	co := xEnv.Clone(L)
+
+	return p.require(co, filename)
+}
+
+func (p *pool) Require(filename string) lua.LValue {
+	L := xEnv.Coroutine()
+	defer xEnv.Free(L)
+
+	return p.require(L, filename)
 }

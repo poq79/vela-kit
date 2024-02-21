@@ -155,6 +155,29 @@ func (s Slice) Meta(L *LState, key LValue) LValue {
 	return s.Get(idx)
 }
 
+func (s Slice) HaveL(L *LState) int {
+	n := s.Len()
+	if n == 0 {
+		L.Push(LFalse)
+		return 1
+	}
+
+	val := L.Get(1)
+	if val.Type() == LTNil {
+		L.Push(LFalse)
+		return 1
+	}
+
+	for i := 0; i < n; i++ {
+		if s[i] == val {
+			L.Push(LTrue)
+			return 1
+		}
+	}
+	L.Push(LFalse)
+	return 1
+}
+
 func (s Slice) NewMeta(L *LState, key LValue, val LValue) {
 	i, ok := key.AssertFloat64()
 	if !ok {
@@ -177,6 +200,8 @@ func (s Slice) Index(L *LState, key string) LValue {
 		return LInt(len(s))
 	case "concat":
 		return NewFunction(s.concatL)
+	case "have":
+		return NewFunction(s.HaveL)
 	default:
 		return LNil
 	}

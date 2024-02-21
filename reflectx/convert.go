@@ -4,7 +4,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 )
 
-func defaultDataTypeToLValue(L *lua.LState, v interface{}) (lua.LValue, bool) {
+func CommTypeToLValue(L *lua.LState, v interface{}) (lua.LValue, bool) {
 	switch rv := v.(type) {
 	case nil:
 		return lua.LNil, true
@@ -65,7 +65,7 @@ func defaultDataTypeToLValue(L *lua.LState, v interface{}) (lua.LValue, bool) {
 		}
 
 		for i := 0; i < n; i++ {
-			llv, ok := defaultDataTypeToLValue(L, rv[i])
+			llv, ok := CommTypeToLValue(L, rv[i])
 			if !ok {
 				return nil, false
 			}

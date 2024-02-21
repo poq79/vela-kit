@@ -68,7 +68,7 @@ func (hm HMap) NewIndex(L *lua.LState, key string, val lua.LValue) {
 	}
 }
 
-func checkHMap(L *lua.LState, idx int) HMap {
+func CheckHMap(L *lua.LState, idx int) HMap {
 	obj := L.CheckObject(idx)
 
 	if hm, ok := obj.(HMap); ok {
@@ -79,7 +79,7 @@ func checkHMap(L *lua.LState, idx int) HMap {
 }
 
 func hmMetaRange(L *lua.LState) int {
-	hm := checkHMap(L, 1)
+	hm := CheckHMap(L, 1)
 	cp := xEnv.P(L.CheckFunction(2))
 	co := xEnv.Clone(L)
 	defer xEnv.Free(co)

@@ -9,7 +9,9 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/proxy"
+	"github.com/vela-ssoc/vela-kit/require"
 	"github.com/vela-ssoc/vela-kit/rtable"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"github.com/vela-ssoc/vela-kit/tasktree"
 	"github.com/vela-ssoc/vela-kit/third"
 	"github.com/vela-ssoc/vela-kit/variable"
@@ -39,7 +41,7 @@ type Environment struct {
 	stop context.CancelFunc
 	tab  *EnvL    //lua vm environment
 	rou  *routine //routine pool cache
-	//bdb         *bboltDB               //bbolt database cache
+	//bdb         *bboltDB             //bbolt database cache
 	db          database               //database
 	log         vela.Log               //External Log interface
 	mbc         []vela.Closer          //Must be closed
@@ -52,12 +54,14 @@ type Environment struct {
 	link        interface{}            //本地调用链接
 	mime        *MimeHub               //mime hub object
 	third       third.VelaThird        //third 三方存储
+	requireHub  require.Pool           //lua require 缓存
 	tupMutex    sync.Mutex             //并发锁
 	tuple       map[string]interface{} //存储一些关键信息
-	onConnect   []onConnectEv
-	router      *rtable.TnlRouter //存储注册路由信息
+	onConnect   []onConnectEv          // tunnel connect env trigger
+	router      *rtable.TnlRouter      //存储注册路由信息
 	hide        definition.MHide
 	onReconnect *pipe.Chains
+	access      *stdutil.Output
 }
 
 func with(env *Environment) {
@@ -105,12 +109,13 @@ func with(env *Environment) {
 
 func Create(mode string, name string, protect bool) *Environment {
 	ctx, cancel := context.WithCancel(context.TODO())
-
+	access := stdutil.New(stdutil.Console())
 	env := &Environment{
-		sub:   &substance{},
-		tuple: make(map[string]interface{}, 32),
-		ctx:   ctx,
-		stop:  cancel,
+		sub:    &substance{},
+		tuple:  make(map[string]interface{}, 32),
+		ctx:    ctx,
+		stop:   cancel,
+		access: access,
 	}
 
 	env.newEnvL(mode, name, protect)

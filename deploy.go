@@ -8,7 +8,6 @@ import (
 	"github.com/vela-ssoc/vela-kit/mime"
 	"github.com/vela-ssoc/vela-kit/node"
 	"github.com/vela-ssoc/vela-kit/plugin"
-	"github.com/vela-ssoc/vela-kit/require"
 	"github.com/vela-ssoc/vela-kit/shared"
 	"github.com/vela-ssoc/vela-kit/tasktree"
 	"github.com/vela-ssoc/vela-kit/thread"
@@ -64,7 +63,6 @@ func (dly *Deploy) base(xEnv vela.Environment) {
 	plugin.Constructor(xEnv)
 	node.Constructor(xEnv)
 	shared.Constructor(xEnv)
-	require.Constructor(xEnv)
 	hashmap.Constructor(xEnv)
 	thread.Constructor(xEnv)
 }

@@ -11,10 +11,10 @@ func WithEnv(env Environment) {
 			_ = console.Close()
 		}()
 
-		_G = env
+		xEnv = env
 	})
 }
 
 func GxEnv() Environment {
-	return _G
+	return xEnv
 }

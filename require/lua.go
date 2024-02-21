@@ -4,28 +4,31 @@ import (
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/vela"
-	"sync"
 )
 
 var (
-	once sync.Once
 	xEnv vela.Environment
 )
 
-func require(L *lua.LState) int {
+func (p *pool) call(L *lua.LState) int {
 	name := L.CheckString(1)
 	if e := auxlib.Name(name); e != nil {
 		L.RaiseError("%s invalid name", name)
 		return 0
 	}
-
-	L.Push(instance.require(L, name))
+	L.Push(p.RequireL(L, name))
 	return 1
 }
 
-func Constructor(env vela.Environment) {
+func Constructor(env vela.Environment, callback func(p Pool) error) {
 	xEnv = env
-	xEnv.Spawn(10, instance.sync)
-	xEnv.Register(instance)
-	env.Set("require", lua.NewFunction(require))
+	p := newPool()
+	if e := callback(p); e != nil {
+		xEnv.Errorf("environment constructor callback fail %v", e)
+		return
+	}
+
+	_ = xEnv.Spawn(5, p.sync)
+
+	env.Set("require", lua.NewExport("lua.require.export", lua.WithFunc(p.call)))
 }

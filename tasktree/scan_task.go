@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/radix"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"time"
 )
@@ -23,18 +24,18 @@ track.pipe(function(section)
 end)
 */
 
-type scanTask struct {
+type ScanTask struct {
 	ctx  context.Context
 	kill context.CancelFunc
 	code *Code
 	co   *lua.LState
 }
 
-func (s *scanTask) report() {
+func (s *ScanTask) report() {
 
 }
 
-func (s *scanTask) StopScanTask() {
+func (s *ScanTask) StopScanTask() {
 	if s.kill != nil {
 		return
 	}
@@ -42,7 +43,7 @@ func (s *scanTask) StopScanTask() {
 	s.kill()
 }
 
-func (s *scanTask) call(env vela.Environment) error {
+func (s *ScanTask) call(env vela.Environment) error {
 	if s.code == nil {
 		return fmt.Errorf("not found code")
 	}
@@ -62,7 +63,7 @@ func (s *scanTask) call(env vela.Environment) error {
 }
 
 func newScanTask(env vela.Environment, id int64, key string, chunk []byte,
-	metadata map[string]interface{}, timeout int) *scanTask {
+	metadata map[string]interface{}, timeout int) *ScanTask {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	if timeout <= 0 {
@@ -90,9 +91,12 @@ func newScanTask(env vela.Environment, id int64, key string, chunk []byte,
 	}
 
 	co.Exdata = code
-	newCodeEv(code, "新增扫描服务").Msg("create %s task succeed by %s", key, env.Name()).Put()
 
-	return &scanTask{
+	console := stdutil.New(stdutil.Console())
+	defer console.Close()
+	console.Debug("新增扫描服务 %s 通过 %s 成功", key, env.Name())
+
+	return &ScanTask{
 		co:   co,
 		ctx:  ctx,
 		code: code,

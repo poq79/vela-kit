@@ -102,6 +102,20 @@ func (tt *TaskTree) delete(ctx *fasthttp.RequestCtx) error {
 	return nil
 }
 
+/*
+	# param
+	{
+		"name": "vela-abc",
+		"code": "print(hello)",
+		"param": {
+			arr: {"name" , "name2" , "name3"},
+			cnt: 10,
+			ip: "10.205.14.127",
+		}
+		"report": true
+	}
+*/
+
 func (tt *TaskTree) scanner(ctx *fasthttp.RequestCtx) error {
 	name := ctx.QueryArgs().Peek("name")
 	body := ctx.Request.Body()
@@ -141,10 +155,11 @@ func (tt *TaskTree) console(ctx *fasthttp.RequestCtx) error {
 }
 
 func (tt *TaskTree) define(r vela.Router) {
-	r.POST("/api/v1/agent/task/diff", xEnv.Then(tt.diff))
-	r.POST("/api/v1/agent/task/status", xEnv.Then(tt.DefineViewTask))
-	r.POST("/api/v1/arr/agent/task/status", xEnv.Then(tt.DefineViewTask))
-	r.POST("/api/v1/arr/agent/task/cli", xEnv.Then(tt.cli))
-	r.DELETE("/api/v1/arr/agent/task/cli", xEnv.Then(tt.delete))
-	r.POST("/api/v1/arr/agent/task/console", xEnv.Then(tt.console))
+	_ = r.POST("/api/v1/agent/scan/run", xEnv.Then(tt.scanner))
+	_ = r.POST("/api/v1/agent/task/diff", xEnv.Then(tt.diff))
+	_ = r.POST("/api/v1/agent/task/status", xEnv.Then(tt.DefineViewTask))
+	_ = r.POST("/api/v1/arr/agent/task/status", xEnv.Then(tt.DefineViewTask))
+	_ = r.POST("/api/v1/arr/agent/task/cli", xEnv.Then(tt.cli))
+	_ = r.DELETE("/api/v1/arr/agent/task/cli", xEnv.Then(tt.delete))
+	_ = r.POST("/api/v1/arr/agent/task/console", xEnv.Then(tt.console))
 }

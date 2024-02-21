@@ -425,6 +425,12 @@ func ToFloat64E(i interface{}) (float64, error) {
 		return float64(s), nil
 	case uint8:
 		return float64(s), nil
+	case lua.LInt:
+		return float64(s), nil
+	case lua.LInt64:
+		return float64(s), nil
+	case lua.LNumber:
+		return float64(s), nil
 	case []byte:
 		v, err := strconv.ParseFloat(B2S(s), 64)
 		if err == nil {

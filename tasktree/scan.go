@@ -8,7 +8,7 @@ import (
 
 type ScanPool struct {
 	mu    sync.Mutex
-	dirty map[string]*scanTask
+	dirty map[string]*ScanTask
 }
 
 func (sp *ScanPool) StopAll() {
@@ -47,7 +47,7 @@ func (sp *ScanPool) List() []*vela.ScanInfo {
 	return tuple
 }
 
-func (sp *ScanPool) Get(name string) *scanTask {
+func (sp *ScanPool) Get(name string) *ScanTask {
 	s, ok := sp.dirty[name]
 	if !ok {
 		return nil
@@ -56,11 +56,11 @@ func (sp *ScanPool) Get(name string) *scanTask {
 	return s
 }
 
-func (tt *TaskTree) visit(callback func(key string, s *scanTask) bool) {
+func (tt *TaskTree) visit(callback func(key string, s *ScanTask) bool) {
 	tt.scans.Range(func(key, value interface{}) bool {
 		var ok bool
 
-		s, ok := value.(*scanTask)
+		s, ok := value.(*ScanTask)
 		if !ok {
 			tt.scans.Delete(key)
 			return true
@@ -70,14 +70,14 @@ func (tt *TaskTree) visit(callback func(key string, s *scanTask) bool) {
 }
 
 func (tt *TaskTree) StopScanAll() {
-	tt.visit(func(key string, s *scanTask) bool {
+	tt.visit(func(key string, s *ScanTask) bool {
 		s.StopScanTask()
 		return true
 	})
 }
 
 func (tt *TaskTree) StopScanById(id int64) {
-	tt.visit(func(key string, s *scanTask) bool {
+	tt.visit(func(key string, s *ScanTask) bool {
 		if s.code.header.id == id {
 			s.StopScanTask()
 			return false
@@ -87,7 +87,7 @@ func (tt *TaskTree) StopScanById(id int64) {
 }
 
 func (tt *TaskTree) StopScanByName(name string) {
-	tt.visit(func(key string, s *scanTask) bool {
+	tt.visit(func(key string, s *ScanTask) bool {
 		if key == name {
 			s.StopScanTask()
 			return false
@@ -99,7 +99,7 @@ func (tt *TaskTree) StopScanByName(name string) {
 
 func (tt *TaskTree) ScanList() []*vela.ScanInfo {
 	var list []*vela.ScanInfo
-	tt.visit(func(key string, s *scanTask) bool {
+	tt.visit(func(key string, s *ScanTask) bool {
 		info := &vela.ScanInfo{
 			Name:    s.code.Key(),
 			Link:    s.code.Link(),
@@ -126,19 +126,19 @@ func (tt *TaskTree) ScanList() []*vela.ScanInfo {
 
 }
 
-func (tt *TaskTree) Scan(env vela.Environment, id int64, cname string, chunk []byte,
-	metadata map[string]interface{}, timeout int) error {
+func (tt *TaskTree) Scan(env vela.Environment, id int64, name string, chunk []byte,
+	result map[string]interface{}, timeout int) error {
 
-	var s *scanTask
+	var s *ScanTask
 
-	v, ok := tt.scans.Load(cname)
+	v, ok := tt.scans.Load(name)
 	if !ok {
 		goto run
 	}
 
-	s, ok = v.(*scanTask)
+	s, ok = v.(*ScanTask)
 	if !ok {
-		tt.scans.Delete(cname)
+		tt.scans.Delete(name)
 		goto run
 	}
 
@@ -146,7 +146,7 @@ func (tt *TaskTree) Scan(env vela.Environment, id int64, cname string, chunk []b
 	time.Sleep(5 * time.Second)
 
 run:
-	task := newScanTask(env, id, cname, chunk, metadata, timeout)
-	tt.scans.Store(cname, task)
+	task := newScanTask(env, id, name, chunk, result, timeout)
+	tt.scans.Store(name, task)
 	return task.call(env)
 }

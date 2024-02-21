@@ -427,7 +427,11 @@ func baseToNumber(L *LState) int {
 			}
 		}
 	default:
-		L.Push(LNil)
+		if n, ok := lv.AssertFloat64(); ok {
+			L.Push(LNumber(n))
+		} else {
+			L.Push(LNil)
+		}
 	}
 	return 1
 }

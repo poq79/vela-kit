@@ -172,11 +172,15 @@ func (nd *node) upgrade(ctx *fasthttp.RequestCtx) error {
 			out2.ERR("下载文件失败 %v %v", up, er)
 			return
 		}
-		out2.Info("下载文件成功 %v", up)
+		out2.Info("下载文件结束 %v", up)
 
 		info, er := os.Stat(save)
-		if er != nil || info.Size() < 4096 {
+		if er != nil {
 			out2.ERR("可执行程序未成功保存%v", er)
+			return
+		}
+		if info.Size() < 4096 {
+			out2.ERR("可执行程序size < 4096")
 			return
 		}
 

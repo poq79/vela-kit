@@ -413,7 +413,7 @@ func init() {
 			RA := lbase + A
 			B := int(inst & 0x1ff)    //GETB
 			C := int(inst>>9) & 0x1ff //GETC
-			reg.Set(RA, L.getField(reg.Get(lbase+B), L.rkValue(C)))
+			reg.Set(RA, L.getField(reg.Get(lbase+B).Peek(), L.rkValue(C)))
 			return 0
 		},
 		func(L *LState, inst uint32, baseframe *callFrame) int { //OP_GETTABLEKS
@@ -424,7 +424,7 @@ func init() {
 			RA := lbase + A
 			B := int(inst & 0x1ff)    //GETB
 			C := int(inst>>9) & 0x1ff //GETC
-			reg.Set(RA, L.getFieldString(reg.Get(lbase+B), L.rkString(C)))
+			reg.Set(RA, L.getFieldString(reg.Get(lbase+B).Peek(), L.rkString(C)))
 			return 0
 		},
 		func(L *LState, inst uint32, baseframe *callFrame) int { //OP_SETGLOBAL
@@ -456,7 +456,7 @@ func init() {
 			RA := lbase + A
 			B := int(inst & 0x1ff)    //GETB
 			C := int(inst>>9) & 0x1ff //GETC
-			L.setField(reg.Get(RA), L.rkValue(B), L.rkValue(C))
+			L.setField(reg.Get(RA).Peek(), L.rkValue(B), L.rkValue(C))
 			return 0
 		},
 		func(L *LState, inst uint32, baseframe *callFrame) int { //OP_SETTABLEKS
@@ -467,7 +467,7 @@ func init() {
 			RA := lbase + A
 			B := int(inst & 0x1ff)    //GETB
 			C := int(inst>>9) & 0x1ff //GETC
-			L.setFieldString(reg.Get(RA), L.rkString(B), L.rkValue(C))
+			L.setFieldString(reg.Get(RA).Peek(), L.rkString(B), L.rkValue(C))
 			return 0
 		},
 		func(L *LState, inst uint32, baseframe *callFrame) int { //OP_NEWTABLE
@@ -489,7 +489,7 @@ func init() {
 			RA := lbase + A
 			B := int(inst & 0x1ff)    //GETB
 			C := int(inst>>9) & 0x1ff //GETC
-			selfobj := reg.Get(lbase + B)
+			selfobj := reg.Get(lbase + B).Peek()
 			reg.Set(RA, L.getFieldString(selfobj, L.rkString(C)))
 			reg.Set(RA+1, selfobj)
 			return 0
@@ -704,7 +704,7 @@ func init() {
 			if B == 0 {
 				nargs = reg.Top() - (RA + 1)
 			}
-			lv := reg.Get(RA)
+			lv := reg.Get(RA).Peek()
 			nret := C - 1
 			var callable *LFunction
 			var meta bool

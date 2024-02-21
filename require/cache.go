@@ -25,7 +25,7 @@ type cache struct {
 	name   string
 	mtime  int64
 	co     *lua.LState
-	cdata  lua.LValue
+	obj    lua.LValue
 }
 
 func (c *cache) Hit() {
@@ -79,7 +79,7 @@ func (c *cache) compile(info *vela.ThirdInfo) error {
 	switch lv.Type() {
 	case lua.LTObject, lua.LTTable, lua.LTAnyData,
 		lua.LTKv, lua.LTSkv, lua.LTVelaData:
-		c.cdata = lv
+		c.obj = lv
 		c.status = OK
 	default:
 		err = fmt.Errorf("compile 3rd %s invalid type , must have index ,got %s", c.file(), lv.Type().String())

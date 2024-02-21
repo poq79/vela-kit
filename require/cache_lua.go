@@ -4,19 +4,17 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 )
 
-func (c *cache) Type() lua.LValueType {
-	return lua.LTObject
-}
+func (c *cache) Type() lua.LValueType { return lua.LTObject }
 
 func (c *cache) gc() {
 	defer func() {
 		c.status = DEL
-		c.cdata = lua.LNil
+		c.obj = lua.LNil
 	}()
 
 	var gc lua.LValue
 
-	switch v := c.cdata.(type) {
+	switch v := c.obj.(type) {
 	case lua.IndexEx:
 		gc = v.Index(c.co, "_gc")
 	case *lua.LTable:
@@ -43,10 +41,10 @@ func (c *cache) object() lua.LValue {
 	}
 
 	if c.status != DEL {
-		return c.cdata
+		return c.obj
 	}
 
-	return instance.require(c.co, c.name)
+	return lua.LNil
 }
 
 func (c *cache) String() string {

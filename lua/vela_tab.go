@@ -2,6 +2,33 @@ package lua
 
 import "strings"
 
+func init() {
+	tableFuncs["key_all"] = TableKeyAll
+	tableFuncs["val_all"] = TableValueAll
+}
+
+func TableKeyAll(L *LState) int {
+	tbl := L.CheckTable(1)
+	arr := Slice{}
+
+	tbl.ForEach(func(k, v LValue) {
+		arr = append(arr, k)
+	})
+	L.Push(arr)
+	return 1
+}
+
+func TableValueAll(L *LState) int {
+	tbl := L.CheckTable(1)
+	arr := Slice{}
+
+	tbl.ForEach(func(k, v LValue) {
+		arr = append(arr, v)
+	})
+	L.Push(arr)
+	return 1
+}
+
 // table check int or default
 func (tb *LTable) CheckInt(key string, d int) int {
 

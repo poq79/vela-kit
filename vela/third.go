@@ -4,8 +4,8 @@ import (
 	"archive/zip"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"io"
 	"os"
@@ -15,6 +15,8 @@ import (
 type ThirdEnv interface {
 	Third(name string) (*ThirdInfo, error) //同步接口
 	ThirdInfo(name string) *ThirdInfo      //查看缓存
+	RequireL(L *lua.LState, filename string) lua.LValue
+	Require(filename string) lua.LValue
 }
 
 type ThirdInfo struct {
@@ -53,7 +55,7 @@ func (info *ThirdInfo) unzip(from, dst string) error {
 	defer func() {
 		err := os.Remove(info.Filepath())
 		if err != nil {
-			_G.Errorf("%s remove fail %v", info.Name, err)
+			xEnv.Errorf("%s remove fail %v", info.Name, err)
 		}
 	}()
 
@@ -144,7 +146,7 @@ func (info *ThirdInfo) decompression() error {
 	}
 
 	if e := os.RemoveAll(info.File()); e != nil {
-		_G.Errorf("%s remove fail %v", info.Name, e)
+		xEnv.Errorf("%s remove fail %v", info.Name, e)
 	}
 
 	return info.unzip(info.Filepath(), info.File())

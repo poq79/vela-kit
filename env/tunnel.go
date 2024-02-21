@@ -129,9 +129,9 @@ func (env *Environment) Shutdown(err error) {
 
 func (env *Environment) Then(fn func(ctx *fasthttp.RequestCtx) error) func(ctx *fasthttp.RequestCtx) {
 	return func(ctx *fasthttp.RequestCtx) {
-		env.Infof("[INTO] ----------------: %s", ctx.Request.URI())
+		env.access.Debug("[INTO] ----------------: %s", ctx.Request.URI())
 		err := fn(ctx)
-		env.Infof("[OVER] ----------------: %s", ctx.Request.URI())
+		env.access.Debug("[OVER] ----------------: %s", ctx.Request.URI())
 		if err != nil {
 			env.router.Bad(ctx, http.StatusInternalServerError, problem.Title("内部错误"), problem.Detail("%v", err))
 			return

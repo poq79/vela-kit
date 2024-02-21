@@ -1,10 +1,11 @@
 package tasktree
 
 import (
-	"fmt"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/reflectx"
+	"github.com/vela-ssoc/vela-kit/stdutil"
 	"github.com/vela-ssoc/vela-kit/vela"
+	"runtime"
 )
 
 func (cd *Code) String() string                         { return lua.B2S(cd.chunk) }
@@ -47,6 +48,24 @@ func privateL(L *lua.LState) int {
 	return 0
 }
 
+// vela.disable("linux")
+// vela.disable()
+
+func disableL(L *lua.LState) int {
+	os := L.IsString(1)
+	if len(os) == 0 {
+		L.RaiseError("disable code")
+		return 0
+	}
+
+	if os == runtime.GOOS {
+		L.RaiseError("disable code")
+		return 0
+	}
+
+	return 0
+}
+
 // Index CODE结果中的PROC服务
 func (cd *Code) Index(L *lua.LState, key string) lua.LValue {
 	ud := cd.vela(key)
@@ -75,15 +94,32 @@ func metadataL(L *lua.LState) int {
 	}
 
 	key := L.CheckString(1)
-
 	L.Push(reflectx.ToLValue(co.metadata[key], L))
 	return 1
+}
+
+func paramL(L *lua.LState) int {
+	co, ok := CheckCodeVM(L)
+	if !ok {
+		return 0
+	}
+
+	key := L.CheckString(1)
+	val, ok := co.Param(key)
+	if ok {
+		L.Push(reflectx.ToLValue(val, L))
+		return 1
+	}
+	return 0
 }
 
 func consoleL(L *lua.LState) int {
 	chunk := lua.Format(L, 0)
 	if L.Console == nil {
-		fmt.Println(chunk)
+		console := stdutil.New(stdutil.Console())
+		defer console.Close()
+
+		console.Debug(chunk)
 		return 0
 	}
 	L.Console.Println(chunk)
@@ -95,4 +131,6 @@ func codeLuaInjectApi(env vela.Environment) {
 	env.Global("private", lua.NewFunction(privateL))
 	env.Global("metadata", lua.NewFunction(metadataL))
 	env.Global("console", lua.NewFunction(consoleL))
+	env.Set("disable", lua.NewFunction(disableL))
+	env.Set("param", lua.NewFunction(paramL))
 }

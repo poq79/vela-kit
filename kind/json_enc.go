@@ -16,6 +16,8 @@ type JsonEncoder struct {
 	//cache   []byte
 }
 
+type EncodeJsonCallback func(*JsonEncoder)
+
 func NewJsonEncoder() *JsonEncoder {
 	return &JsonEncoder{cache: &buffer.Byte{B: make([]byte, 0, 4096)}}
 }
@@ -353,6 +355,14 @@ func (enc *JsonEncoder) KV(key string, s interface{}) {
 		enc.kv1(key, strconv.FormatFloat(float64(val), 'f', -1, 64))
 	case lua.LInt:
 		enc.kv1(key, strconv.Itoa(int(val)))
+	case *lua.LTable:
+		buff := NewJsonEncoder()
+		err := Tab2Json(val, buff)
+		if err != nil {
+			return
+		}
+
+		enc.Raw(key, buff.Bytes())
 
 	case []string:
 		enc.Join(key, val)

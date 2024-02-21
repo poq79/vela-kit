@@ -1,9 +1,7 @@
 package hashmap
 
 import (
-	"bytes"
-	"encoding/gob"
-	"github.com/vela-ssoc/vela-kit/mime"
+	"encoding/json"
 	"github.com/vela-ssoc/vela-kit/vela"
 )
 
@@ -12,17 +10,19 @@ var xEnv vela.Environment
 type HMap map[string]interface{}
 
 func Encode(v interface{}) ([]byte, error) {
-	return mime.BinaryEncode(v)
+	return json.Marshal(v)
 }
 
 func Decode(chunk []byte) (interface{}, error) {
 	hm := New(0)
-	dnc := gob.NewDecoder(bytes.NewReader(chunk))
-	err := dnc.Decode(&hm)
-	if err != nil {
-		return nil, err
+	err := json.Unmarshal(chunk, &hm)
+	return hm, err
+}
+
+func (hm HMap) Merge(v HMap) {
+	for key, val := range v {
+		hm[key] = val
 	}
-	return hm, nil
 }
 
 func New(cap int) HMap {

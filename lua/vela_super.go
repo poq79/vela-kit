@@ -13,6 +13,7 @@ type SuperVelaData struct {
 func (sv *SuperVelaData) Init(typeof string) {
 	sv.Status = VTInit
 	sv.TypeOf = typeof
+	sv.Uptime = time.Now()
 }
 
 func (sv *SuperVelaData) vm(L *LState) {

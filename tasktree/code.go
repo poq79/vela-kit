@@ -56,8 +56,13 @@ type Code struct {
 	cancel context.CancelFunc
 
 	//fn     *lua.LFunction
-	chunk    []byte
+	chunk []byte
+
+	//meta
 	metadata map[string]interface{}
+
+	//param
+	param map[string]interface{}
 }
 
 func newCodeVM(key string, chunk []byte, env vela.Environment, way vela.Way) (*lua.LState, *Code) {
@@ -89,6 +94,10 @@ func freeCodeVM(code *Code) {
 	} else {
 		ev.Msg("成功").Put()
 	}
+}
+
+func (cd *Code) stop() {
+	cd.ToDisable()
 }
 
 func (cd *Code) invalid(e error) {
@@ -203,6 +212,10 @@ func (cd *Code) ToUpdate() {
 	atomic.StoreUint32(&cd.header.status, uint32(vela.Update))
 }
 
+func (cd *Code) ToDisable() {
+	atomic.StoreUint32(&cd.header.status, uint32(vela.Disable))
+}
+
 func (cd *Code) Panic(err error) {
 	cd.header.err = err
 	atomic.StoreUint32(&cd.header.status, uint32(vela.Panic))
@@ -252,13 +265,18 @@ func (cd *Code) pcall(L *lua.LState, way vela.Way) error {
 
 	cd.header.uptime = time.Now()
 	err = L.CallByParam(cd.header.env.P(fn))
-	if err != nil {
-		cd.Fail(err)
-	} else {
+	if err == nil {
 		cd.Success()
+		return cd.Wrap()
 	}
 
-	return cd.Wrap()
+	if ee, ok := err.(*lua.ApiError); ok && strings.HasSuffix(ee.Object.String(), "disable code") {
+		cd.ToDisable()
+		return cd.Wrap()
+	} else {
+		cd.Fail(err)
+		return cd.Wrap()
+	}
 }
 
 func (cd *Code) wakeupEv(again bool, way vela.Way) {
@@ -291,18 +309,18 @@ func (cd *Code) wakeup(co *lua.LState, way vela.Way) {
 		return
 
 	case vela.Register:
-		cd.pcall(co, way)
+		_ = cd.pcall(co, way)
 		cd.wakeupEv(false, way)
 
 	case vela.Fail:
-		cd.pcall(co, way)
+		_ = cd.pcall(co, way)
 		cd.wakeupEv(true, way)
 
 	case vela.Update:
 		cd.reset()
-		cd.pcall(co, way)
+		_ = cd.pcall(co, way)
 		cd.wakeupEv(true, way)
-		cd.clear()
+		_ = cd.clear()
 
 	case vela.Panic:
 		audit.NewEvent("wakeup").
@@ -316,6 +334,10 @@ func (cd *Code) wakeup(co *lua.LState, way vela.Way) {
 			Msg("%s wakeup %s fail", way.String(), cd.Key()).
 			Alert().Log().Put()
 
+	case vela.Disable:
+		cd.reset()
+		cd.clear()
+
 	default:
 		audit.NewEvent("wakeup").
 			Subject("未知状态").
@@ -324,4 +346,13 @@ func (cd *Code) wakeup(co *lua.LState, way vela.Way) {
 			Alert().Log().Put()
 	}
 
+}
+
+func (cd *Code) Param(key string) (interface{}, bool) {
+	if cd.param == nil {
+		return nil, false
+	}
+
+	v, ok := cd.param[key]
+	return v, ok
 }
