@@ -94,7 +94,9 @@ func GetCpuStat() (float64, float64, error) {
 	uptime := getUptime()
 	pid := os.Getpid()
 	systemTimes, err := getSystemTimes()
-
+	if err != nil {
+		return -1, -1, err
+	}
 	procStatFileBytes, err := os.ReadFile(path.Join("/proc", strconv.Itoa(pid), "stat"))
 	if err != nil {
 		return -1, -1, err
