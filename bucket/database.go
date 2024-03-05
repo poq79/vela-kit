@@ -18,6 +18,7 @@ type Database struct {
 	opt        *bbolt.Options
 	ssc        *bbolt.DB
 	orm        *storm.DB
+	shm        *bbolt.DB
 }
 
 func NewDatabase() *Database {
@@ -83,10 +84,26 @@ func (db *Database) open() {
 	orm.WithCodec(codec.Sonic{})
 	exception.Fatal(err)
 	db.orm = orm
+
+	//新建数据存储
+	path = db.walk(".shm")
+	shm, err := bbolt.Open(path, 0600, db.opt)
+	exception.Fatal(err)
+	db.shm = shm
 }
 
 func (db *Database) DB() *bbolt.DB {
 	return db.ssc
+}
+
+func (db *Database) ShmDB() *bbolt.DB { return db.shm }
+
+func (db *Database) Close() error {
+	errs := exception.New()
+	errs.Try(".ssc", db.ssc.Close())
+	errs.Try(".ssx", db.ssc.Close())
+	errs.Try(".shm", db.ssc.Close())
+	return errs.Wrap()
 }
 
 func (db *Database) Bucket(v ...string) vela.Bucket {
@@ -97,6 +114,18 @@ func (db *Database) Bucket(v ...string) vela.Bucket {
 
 	b := &Bucket{dbx: db, export: "json"}
 
+	for i := 0; i < n; i++ {
+		b.chains = append(b.chains, lua.S2B(v[i]))
+	}
+	return b
+}
+
+func (db *Database) Shm(v ...string) vela.Bucket {
+	n := len(v)
+	if n == 0 {
+		return nil
+	}
+	b := &Bucket{dbx: db, export: "json"}
 	for i := 0; i < n; i++ {
 		b.chains = append(b.chains, lua.S2B(v[i]))
 	}

@@ -215,19 +215,19 @@ func (ev *Event) Log() *Event {
 	//	e = ev.err.Error()
 	//}
 	//xEnv.Error(ev.msg, zap.Time("time", ev.time),
-	//	zap.String("node_id", ev.id),
-	//	zap.String("inet", ev.inet),
-	//	zap.String("subject", ev.subject),
-	//	zap.String("remote_addr", ev.rAddr),
+	//	zap.Text("node_id", ev.id),
+	//	zap.Text("inet", ev.inet),
+	//	zap.Text("subject", ev.subject),
+	//	zap.Text("remote_addr", ev.rAddr),
 	//	zap.Int("remote_port", ev.rPort),
-	//	zap.String("region", ev.region),
-	//	zap.String("from", ev.from),
-	//	zap.String("typeof", ev.typeof),
-	//	zap.String("user", ev.user),
-	//	zap.String("auth", ev.auth),
-	//	zap.String("error", e),
+	//	zap.Text("region", ev.region),
+	//	zap.Text("from", ev.from),
+	//	zap.Text("typeof", ev.typeof),
+	//	zap.Text("user", ev.user),
+	//	zap.Text("auth", ev.auth),
+	//	zap.Text("error", e),
 	//	zap.Bool("alert", ev.alert),
-	//	zap.String("level", ev.level))
+	//	zap.Text("level", ev.level))
 	//return ev
 }
 

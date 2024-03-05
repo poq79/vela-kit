@@ -3,7 +3,6 @@ package tasktree
 import (
 	"github.com/vela-ssoc/vela-kit/vela"
 	"sync"
-	"time"
 )
 
 type ScanPool struct {
@@ -143,7 +142,6 @@ func (tt *TaskTree) Scan(env vela.Environment, id int64, name string, chunk []by
 	}
 
 	s.StopScanTask()
-	time.Sleep(5 * time.Second)
 
 run:
 	task := newScanTask(env, id, name, chunk, result, timeout)

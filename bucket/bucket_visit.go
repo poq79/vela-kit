@@ -224,6 +224,20 @@ func (bkt *Bucket) Get(key string) (interface{}, error) {
 	return it.Decode()
 }
 
+func (bkt *Bucket) GetFn(key string, fn func(interface{}) error) error {
+	it, err := bkt.Load(key)
+	if err != nil {
+		return err
+	}
+
+	src, err := it.Decode()
+	if err != nil {
+		return err
+	}
+
+	return fn(src)
+}
+
 func (bkt *Bucket) Int(key string) int {
 	val, err := bkt.Get(key)
 	if err != nil {

@@ -57,6 +57,7 @@ func (env *Environment) newMimeHub() {
 		enc: make(map[string]vela.EncodeFunc, 64),
 		dec: make(map[string]vela.DecodeFunc, 64),
 	}
+	mhb.register(new(Once), vela.JsonEncode, vela.JsonDecode)
 	env.mime = mhb
 }
 

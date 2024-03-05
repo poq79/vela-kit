@@ -42,9 +42,9 @@ func (ln *Listener) CloseActiveConn() {
 	//	sess.cancel()
 
 	//	if err := conn.Close(); err != nil {
-	//		ln.xEnv.Errorf("ref=%d %s -> %s close fail %v", ref, conn.RemoteAddr().String(), conn.LocalAddr().String(), err)
+	//		ln.xEnv.Errorf("ref=%d %s -> %s close fail %v", ref, conn.RemoteAddr().Text(), conn.LocalAddr().Text(), err)
 	//	} else {
-	//		ln.xEnv.Errorf("ref=%d %s -> %s close succeed", ref, conn.RemoteAddr().String(), conn.LocalAddr().String())
+	//		ln.xEnv.Errorf("ref=%d %s -> %s close succeed", ref, conn.RemoteAddr().Text(), conn.LocalAddr().Text())
 
 	//	}
 	//	ln.pool.Delete(ref)

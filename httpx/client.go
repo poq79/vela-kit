@@ -51,7 +51,7 @@ const (
 var (
 	hdrUserAgentKey       = http.CanonicalHeaderKey("User-Agent")
 	hdrAcceptKey          = http.CanonicalHeaderKey("Accept")
-	hdrContentTypeKey     = http.CanonicalHeaderKey("Content-Type")
+	hdrContentTypeKey     = http.CanonicalHeaderKey("Content-Ktype")
 	hdrContentLengthKey   = http.CanonicalHeaderKey("Content-Length")
 	hdrContentEncodingKey = http.CanonicalHeaderKey("Content-Encoding")
 	hdrLocationKey        = http.CanonicalHeaderKey("Location")
@@ -202,10 +202,10 @@ func (c *Client) SetBaseURL(url string) *Client {
 //
 // See `Request.SetHeader` or `Request.SetHeaders`.
 //
-// For Example: To set `Content-Type` and `Accept` as `application/json`
+// For Example: To set `Content-Ktype` and `Accept` as `application/json`
 //
 //	client.
-//		SetHeader("Content-Type", "application/json").
+//		SetHeader("Content-Ktype", "application/json").
 //		SetHeader("Accept", "application/json")
 func (c *Client) SetHeader(header, value string) *Client {
 	c.Header.Set(header, value)
@@ -218,10 +218,10 @@ func (c *Client) SetHeader(header, value string) *Client {
 //
 // See `Request.SetHeaders` or `Request.SetHeader`.
 //
-// For Example: To set `Content-Type` and `Accept` as `application/json`
+// For Example: To set `Content-Ktype` and `Accept` as `application/json`
 //
 //	client.SetHeaders(map[string]string{
-//			"Content-Type": "application/json",
+//			"Content-Ktype": "application/json",
 //			"Accept": "application/json",
 //		})
 func (c *Client) SetHeaders(headers map[string]string) *Client {

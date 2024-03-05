@@ -134,7 +134,7 @@ func (m *monitor) AgentAlloc() {
 	runtime.ReadMemStats(&info)
 
 	if info.Alloc > m.Memory {
-		audit.Errorf("memory overflow %d > %d", info.Alloc, m.Memory).From("runtime").Log().Put()
+		//audit.Errorf("memory overflow %d > %d", info.Alloc, m.Memory).From("runtime").Log().Put()
 		debug.FreeOSMemory()
 	}
 }

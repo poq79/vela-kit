@@ -1535,7 +1535,7 @@ func StringToDate(s string) (time.Time, error) {
 		time.ANSIC,
 		time.UnixDate,
 		time.RubyDate,
-		"2006-01-02 15:04:05.999999999 -0700 MST", // Time.String()
+		"2006-01-02 15:04:05.999999999 -0700 MST", // Time.Text()
 		"2006-01-02",
 		"02 Jan 2006",
 		"2006-01-02T15:04:05-0700", // RFC3339 without timezone hh:mm colon

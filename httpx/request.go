@@ -94,10 +94,10 @@ func (r *Request) SetContext(ctx context.Context) *Request {
 
 // SetHeader method is to set a single header field and its value in the current request.
 //
-// For Example: To set `Content-Type` and `Accept` as `application/json`.
+// For Example: To set `Content-Ktype` and `Accept` as `application/json`.
 //
 //	client.R().
-//		SetHeader("Content-Type", "application/json").
+//		SetHeader("Content-Ktype", "application/json").
 //		SetHeader("Accept", "application/json")
 //
 // Also you can override header value, which was set at client instance level.
@@ -108,11 +108,11 @@ func (r *Request) SetHeader(header, value string) *Request {
 
 // SetHeaders method sets multiple headers field and its values at one go in the current request.
 //
-// For Example: To set `Content-Type` and `Accept` as `application/json`
+// For Example: To set `Content-Ktype` and `Accept` as `application/json`
 //
 //	client.R().
 //		SetHeaders(map[string]string{
-//			"Content-Type": "application/json",
+//			"Content-Ktype": "application/json",
 //			"Accept": "application/json",
 //		})
 //
@@ -676,16 +676,16 @@ func (r *Request) SetRawPathParams(params map[string]string) *Request {
 	return r
 }
 
-// ExpectContentType method allows to provide fallback `Content-Type` for automatic unmarshalling
-// when `Content-Type` response header is unavailable.
+// ExpectContentType method allows to provide fallback `Content-Ktype` for automatic unmarshalling
+// when `Content-Ktype` response header is unavailable.
 func (r *Request) ExpectContentType(contentType string) *Request {
 	r.fallbackContentType = contentType
 	return r
 }
 
-// ForceContentType method provides a strong sense of response `Content-Type` for automatic unmarshalling.
-// Resty gives this a higher priority than the `Content-Type` response header.  This means that if both
-// `Request.ForceContentType` is set and the response `Content-Type` is available, `ForceContentType` will win.
+// ForceContentType method provides a strong sense of response `Content-Ktype` for automatic unmarshalling.
+// Resty gives this a higher priority than the `Content-Ktype` response header.  This means that if both
+// `Request.ForceContentType` is set and the response `Content-Ktype` is available, `ForceContentType` will win.
 func (r *Request) ForceContentType(contentType string) *Request {
 	r.forceContentType = contentType
 	return r

@@ -8,12 +8,17 @@ import (
 
 type database interface {
 	DB() *bbolt.DB
+	Shm(...string) vela.Bucket
 	Bucket(...string) vela.Bucket
 	Storm(...string) storm.Node
 }
 
 func (env *Environment) Bucket(v ...string) vela.Bucket {
 	return env.db.Bucket(v...)
+}
+
+func (env *Environment) Shm(v ...string) vela.Bucket {
+	return env.db.Shm(v...)
 }
 
 func (env *Environment) Storm(v ...string) storm.Node {

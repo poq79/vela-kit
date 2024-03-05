@@ -2,12 +2,58 @@ package env
 
 import (
 	"bytes"
+	strutil "github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/tasktree"
 	vela "github.com/vela-ssoc/vela-kit/vela"
 	"net"
 	"strings"
+	"time"
 )
+
+type Once struct {
+	Time time.Time `json:"time" lua:"time"`
+	Key  string    `json:"key" lua:"key"`
+}
+
+func (env *Environment) OnceL(L *lua.LState) int {
+	key := L.CheckString(1)
+	if e := strutil.Name(key); e != nil {
+		L.RaiseError("once %v", e)
+		return 0
+	}
+
+	bkt := env.Shm("VELA-EXDATA-DB", "ONCE-BKT")
+	if bkt == nil {
+		L.RaiseError("%v", "not found [VEAL-RUNTIME-DB,ONCE-BKT]")
+		return 0
+	}
+
+	handle := func(ov *Once) int {
+		ud := lua.NewAnyData(ov, lua.Reflect(lua.ELEM))
+		chain := pipe.NewByLua(L, pipe.Seek(1), pipe.Env(env))
+		chain.Do(ud, L, func(err error) {
+			L.RaiseError("%v", err)
+		})
+		_ = bkt.Store(key, true, 0)
+		L.Push(ud)
+		return 1
+	}
+
+	val, err := bkt.Get(key)
+	if err != nil {
+		return handle(&Once{time.Now(), key})
+	}
+
+	ov, ok := val.(*Once)
+	if !ok {
+		return handle(&Once{time.Now(), key})
+	}
+
+	L.Push(lua.NewAnyData(ov, lua.Reflect(lua.ELEM)))
+	return 1
+}
 
 func (env *Environment) hideIndexL(L *lua.LState, key string) lua.LValue {
 	switch key {

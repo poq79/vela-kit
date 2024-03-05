@@ -68,6 +68,7 @@ type auxiliary interface {
 	Notify()                         //监控退出信号
 	Kill(os.Signal)                  //退出
 	Bucket(...string) Bucket         //缓存
+	Shm(...string) Bucket            //程序缓存
 	Storm(...string) storm.Node      //storm node
 	Adt() interface{}                //审计对象
 	Store(string, interface{})       //存储对象

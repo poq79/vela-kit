@@ -361,7 +361,7 @@ func (enc *JsonEncoder) KV(key string, s interface{}) {
 		if err != nil {
 			return
 		}
-
+		buff.TrimLastSym()
 		enc.Raw(key, buff.Bytes())
 
 	case []string:
@@ -383,6 +383,13 @@ func (enc *JsonEncoder) KV(key string, s interface{}) {
 		enc.kv2(key, val.Format(time.RFC3339Nano))
 	case error:
 		enc.kv2(key, val.Error())
+
+	case json.Marshaler:
+		raw, err := val.MarshalJSON()
+		if err != nil {
+			return
+		}
+		enc.Raw(key, raw)
 
 	case fmt.Stringer:
 		enc.kv2(key, val.String())
@@ -494,6 +501,18 @@ func (enc *JsonEncoder) End(val string) {
 	}
 
 	enc.WriteString(val)
+}
+
+func (enc *JsonEncoder) TrimLastSym() {
+	n := enc.cache.Len()
+
+	if n <= 0 {
+		return
+	}
+
+	if enc.cache.B[n-1] == ',' {
+		enc.cache.B = enc.cache.B[:n-1]
+	}
 }
 
 func (enc *JsonEncoder) Bytes() []byte {
