@@ -6,6 +6,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/exception"
 	"github.com/vela-ssoc/vela-kit/kind"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/strutil"
 	"go.uber.org/zap/zapcore"
 	"net"
 	"strconv"
@@ -197,8 +198,16 @@ func (ev *Event) Log() *Event {
 
 	if ev.err == nil {
 		xEnv.Debugf("[%s] [%s] %s %s %s %s %s %s %d %s",
-			ev.level, ev.subject, ev.from, ev.typeof,
-			ev.user, ev.auth, ev.msg, ev.rAddr, ev.rPort, ev.region)
+			strutil.StringOr(ev.level, "-"),
+			strutil.StringOr(ev.subject, "-"),
+			strutil.StringOr(ev.from, "-"),
+			strutil.StringOr(ev.typeof, "-"),
+			strutil.StringOr(ev.user, "-"),
+			strutil.StringOr(ev.auth, "-"),
+			strutil.StringOr(ev.msg, "-"),
+			strutil.StringOr(ev.rAddr, "-"),
+			ev.rPort,
+			strutil.StringOr(ev.region, "-"))
 		//xEnv.Debug(ev.toLine())
 		return ev
 	}

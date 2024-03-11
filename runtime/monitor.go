@@ -3,9 +3,9 @@ package runtime
 import (
 	"container/ring"
 	"fmt"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"gopkg.in/tomb.v2"

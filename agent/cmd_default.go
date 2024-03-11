@@ -6,7 +6,7 @@ package agent
 import (
 	"fmt"
 	"github.com/kardianos/service"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/stdutil"
 	tunnel "github.com/vela-ssoc/vela-tunnel"
 	"os"

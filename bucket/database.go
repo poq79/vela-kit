@@ -112,7 +112,7 @@ func (db *Database) Bucket(v ...string) vela.Bucket {
 		return nil
 	}
 
-	b := &Bucket{dbx: db, export: "json"}
+	b := &Bucket{dbx: db.ssc, export: "json"}
 
 	for i := 0; i < n; i++ {
 		b.chains = append(b.chains, lua.S2B(v[i]))
@@ -125,7 +125,7 @@ func (db *Database) Shm(v ...string) vela.Bucket {
 	if n == 0 {
 		return nil
 	}
-	b := &Bucket{dbx: db, export: "json"}
+	b := &Bucket{dbx: db.shm, export: "json"}
 	for i := 0; i < n; i++ {
 		b.chains = append(b.chains, lua.S2B(v[i]))
 	}

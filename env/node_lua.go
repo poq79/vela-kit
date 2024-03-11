@@ -1,7 +1,7 @@
 package env
 
 import (
-	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/v3/host"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"net"
 )

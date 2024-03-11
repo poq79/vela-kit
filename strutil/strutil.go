@@ -93,3 +93,10 @@ func NgramMap(term string, size int) (map[string]int, int) {
 func NgramIntersection(a, b string, size int) (map[string]int, int, int, int) {
 	return ngram.Intersection([]rune(a), []rune(b), size)
 }
+
+func StringOr(str string, def string) string {
+	if str == "" {
+		return def
+	}
+	return str
+}

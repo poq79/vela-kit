@@ -31,7 +31,7 @@ func (bkt *Bucket) Encode(iv interface{}, expire int) ([]byte, error) {
 }
 
 func (bkt *Bucket) BatchStore(v map[string]interface{}, expire int) error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		if v == nil {
 			return nil
 		}
@@ -59,7 +59,7 @@ func (bkt *Bucket) BatchStore(v map[string]interface{}, expire int) error {
 }
 
 func (bkt *Bucket) Store(key string, v interface{}, expire int) error {
-	err := bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	err := bkt.dbx.Batch(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, false)
 		if err != nil {
 			return err
@@ -79,7 +79,7 @@ func (bkt *Bucket) Load(key string) (element, error) {
 	elem := element{}
 	od := bkt.NewOverdue()
 
-	err := bkt.dbx.ssc.View(func(tx *Tx) error {
+	err := bkt.dbx.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
 			return err
@@ -101,7 +101,7 @@ func (bkt *Bucket) Load(key string) (element, error) {
 }
 
 func (bkt *Bucket) Replace(key string, v interface{}, expire int) error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, false)
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func (bkt *Bucket) Replace(key string, v interface{}, expire int) error {
 }
 
 func (bkt *Bucket) Delete(key string) error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, false)
 		if err != nil {
 			return nil
@@ -147,7 +147,7 @@ func (bkt *Bucket) Ext() string {
 }
 
 func (bkt *Bucket) Clean() error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		n := len(bkt.chains)
 		switch n {
 		case 0:
@@ -177,7 +177,7 @@ func (bkt *Bucket) Clean() error {
 }
 
 func (bkt *Bucket) DeleteBucket(nb string) error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, false)
 		if err != nil {
 			return nil
@@ -296,11 +296,11 @@ func (bkt *Bucket) Batch(fn func(tx *bbolt.Tx, bbt *bbolt.Bucket) error, writabl
 		return fmt.Errorf("not found found")
 	}
 
-	if bkt.dbx.ssc == nil {
+	if bkt.dbx == nil {
 		return fmt.Errorf("not found db")
 	}
 
-	tx, err := bkt.dbx.ssc.Begin(writable)
+	tx, err := bkt.dbx.Begin(writable)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (bkt *Bucket) Batch(fn func(tx *bbolt.Tx, bbt *bbolt.Bucket) error, writabl
 }
 
 func (bkt *Bucket) Push(key string, val []byte, expire int64) error {
-	return bkt.dbx.ssc.Batch(func(tx *Tx) error {
+	return bkt.dbx.Batch(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, false)
 		if err != nil {
 			return err
@@ -364,7 +364,7 @@ func (bkt *Bucket) Value(key string) ([]byte, error) {
 func (bkt *Bucket) Count() int {
 	var s bbolt.BucketStats
 
-	bkt.dbx.ssc.View(func(tx *bbolt.Tx) error {
+	bkt.dbx.View(func(tx *bbolt.Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
 			return err
@@ -377,7 +377,7 @@ func (bkt *Bucket) Count() int {
 }
 func (bkt *Bucket) ForEach(fn func(string, []byte)) {
 	od := bkt.NewOverdue()
-	err := bkt.dbx.ssc.View(func(tx *Tx) error {
+	err := bkt.dbx.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
 			return err
@@ -417,7 +417,7 @@ func (bkt *Bucket) ForEach(fn func(string, []byte)) {
 
 func (bkt *Bucket) Range(fn func(string, interface{})) {
 	od := bkt.NewOverdue()
-	err := bkt.dbx.ssc.View(func(tx *Tx) error {
+	err := bkt.dbx.View(func(tx *Tx) error {
 		bbt, err := bkt.unpack(tx, true)
 		if err != nil {
 			return err

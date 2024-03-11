@@ -4,7 +4,7 @@ import (
 	"fmt"
 	auxlib "github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
-	lvalue "github.com/vela-ssoc/vela-kit/reflectx"
+	refletx "github.com/vela-ssoc/vela-kit/reflectx"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"io"
 )
@@ -146,18 +146,18 @@ func (px *Chains) LFunc(fn *lua.LFunction) Fn {
 		L, ok := v[size-1].(*lua.LState)
 		if ok {
 			co = px.clone(L)
-			v = v[:size-1]
+			size = size - 1
 		}
 		cp := px.xEnv.P(fn)
 
-		var args []lua.LValue
-		for _, item := range v {
-			args = append(args, lvalue.ToLValue(item, co))
+		args := make([]lua.LValue, size)
+		for i := 0; i < size; i++ {
+			args[i] = refletx.ToLValue(v[i], co)
 		}
 		defer px.xEnv.Free(co)
 
 		if len(args) == 0 {
-			return fmt.Errorf("xreflect to LValue fail %v", v)
+			return fmt.Errorf("reflectx to LValue fail %v", v)
 		}
 
 		return co.CallByParam(cp, args...)

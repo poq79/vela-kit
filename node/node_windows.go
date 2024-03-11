@@ -5,7 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	ps "github.com/shirou/gopsutil/process"
+	ps "github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/stdutil"
 	"os"

@@ -2,7 +2,7 @@ package agent
 
 import (
 	"fmt"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/fileutil"
 	"github.com/vela-ssoc/vela-kit/stdutil"
 	tunnel "github.com/vela-ssoc/vela-tunnel"
@@ -54,15 +54,18 @@ func (p *program) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 
 	for {
 		c := <-r
-		p.output.ERR("ssc service svc signal %v", c.Cmd)
 		switch c.Cmd {
 		case svc.Interrogate:
+			p.output.ERR("ssc service svc signal Interrogate")
 			s <- c.CurrentStatus
 		case svc.Stop, svc.Shutdown:
+			p.output.ERR("ssc service svc signal stop or shutdown")
 			s <- svc.Status{State: svc.StopPending}
 			p.stop()
 			s <- svc.Status{State: svc.Stopped}
 			return
+		default:
+			p.output.ERR("ssc service svc signal %v", c.Cmd)
 		}
 	}
 
