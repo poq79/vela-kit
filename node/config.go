@@ -34,17 +34,17 @@ func newLuaNode(L *lua.LState) int {
 		case "resolve":
 			resolve = val.String()
 		case "id":
-			_G.id = val.String()
+			ssc.id = val.String()
 
 		case "prefix":
-			_G.prefix = val.String()
+			ssc.prefix = val.String()
 
 		default:
 			L.RaiseError("node not found %s", key)
 		}
 	})
 
-	if e := _G.valid(); e != nil {
+	if e := ssc.valid(); e != nil {
 		xEnv.Errorf("node startup failure error %v", e)
 		os.Exit(-1)
 		return 0

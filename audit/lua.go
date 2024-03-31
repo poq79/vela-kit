@@ -54,6 +54,7 @@ func Constructor(env vela.Environment, callback func(*Audit) error) {
 
 	xEnv.Set("event", lua.NewFunction(newLuaEvent))
 	xEnv.Set("Debug", lua.NewFunction(newLuaDebug))
+	xEnv.Set("debug", lua.NewFunction(newLuaDebug))
 	xEnv.Set("Error", lua.NewFunction(newLuaError))
 	xEnv.Set("ERR", lua.NewFunction(newLuaError))
 	xEnv.Set("Info", lua.NewFunction(newLuaInfo))
@@ -62,4 +63,6 @@ func Constructor(env vela.Environment, callback func(*Audit) error) {
 	if err := callback(adt); err != nil {
 		xEnv.Errorf("audit callback fail %v", err)
 	}
+
+	adt.define(xEnv.R())
 }

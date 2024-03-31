@@ -3,6 +3,7 @@ package httpx
 import (
 	"github.com/vela-ssoc/vela-kit/strutil"
 	"net"
+	"strings"
 )
 
 func WithPort(v uint16) func(r *RawHttp) {
@@ -22,7 +23,16 @@ func WithScheme(v string) func(r *RawHttp) {
 
 func WithAddr(peer string) func(r *RawHttp) {
 	return func(r *RawHttp) {
-		r.Peer = peer
+		if len(peer) == 0 {
+			return
+		}
+
+		host, port, err := net.SplitHostPort(peer)
+		if err != nil {
+			r.Peer = peer
+		}
+		r.Port = port
+		r.Peer = strings.TrimSpace(host)
 	}
 
 }

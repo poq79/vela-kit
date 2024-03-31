@@ -1,13 +1,13 @@
 package node
 
 func ID() string {
-	return _G.id
+	return ssc.id
 }
 
 func Prefix() string {
-	if _G.prefix == "" {
+	if ssc.prefix == "" {
 		return "share"
 	}
 
-	return _G.prefix
+	return ssc.prefix
 }

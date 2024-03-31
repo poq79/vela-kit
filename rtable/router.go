@@ -49,6 +49,17 @@ func (trr *TnlRouter) url(req string) string {
 	return fmt.Sprintf("http://ssc/%s", req)
 }
 
+func (trr *TnlRouter) Exec(method, req string, v interface{}) (*http.Response, error) { //get
+	switch method {
+	case "GET":
+		return trr.cli.Get(trr.url(req))
+	case "POST":
+		return trr.Call(req, v)
+	default:
+		return nil, fmt.Errorf("method %s not support", method)
+	}
+}
+
 func (trr *TnlRouter) Call(req string, v interface{}) (*http.Response, error) { //post
 	switch data := v.(type) {
 	case nil:

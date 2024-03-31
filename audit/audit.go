@@ -5,7 +5,6 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"io"
 	"reflect"
 )
 
@@ -18,7 +17,7 @@ var typeof = reflect.TypeOf((*Audit)(nil)).String()
 type Audit struct {
 	lua.SuperVelaData
 	cfg *config
-	fd  io.WriteCloser
+	fd  *lumberjack.Logger
 }
 
 func withConfig(cfg *config) *Audit {

@@ -24,6 +24,22 @@ func (nd *node) valid() error {
 	return nil
 }
 
+func (nd *node) Path() (exe string, work string, backup string) {
+	out := stdutil.New(stdutil.Console())
+	defer out.Close()
+	var err error
+
+	exe, err = xEnv.Exe()
+	if err != nil {
+		out.ERR("executable got fail %v", err)
+		return
+	}
+
+	work, _ = filepath.Split(exe)
+	backup = filepath.Join(work, "backup")
+	return
+}
+
 func (nd *node) Name() string {
 	return nd.id
 }
