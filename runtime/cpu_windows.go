@@ -84,12 +84,11 @@ func GetCurrentProcessCPUpct() (float64, float64, error) {
 	// 获取进程句柄
 	processHandle, err := syscall.GetCurrentProcess()
 	if err != nil {
-		fmt.Println("无法获取当前进程句柄:", err)
 		return -1, -1, err
 	}
 	defer syscall.CloseHandle(processHandle)
 
-	// 获取当前进程的 CPU 时间
+	// 获取当前进程的 Cpu 时间
 	var creationTimeAgent, exitTimeAgent, kernelTimeAgent, userTimeAgent FileTime
 
 	// 获取进程时间信息
@@ -102,7 +101,7 @@ func GetCurrentProcessCPUpct() (float64, float64, error) {
 		fmt.Println("无法获取当前进程cpu时间:", err)
 		return -1, -1, err
 	}
-	// 计算 CPU 时间
+	// 计算 Cpu 时间
 	agentCpuTime := int64((kernelTimeAgent.dwHighDateTime)<<32|kernelTimeAgent.dwLowDateTime) + int64((userTimeAgent.dwHighDateTime)<<32|userTimeAgent.dwLowDateTime)
 
 	idle := CompareFileTime2(m_preidleTime, idleTime)
@@ -128,7 +127,6 @@ func GetCurrentProcessCPUpct() (float64, float64, error) {
 
 	latestCpuPct = cpuUsage
 	latestProcessCpuPct = currentProcessCpuUsage
-
 	return cpuUsage, currentProcessCpuUsage, nil
 }
 
