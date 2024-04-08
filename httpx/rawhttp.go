@@ -389,7 +389,8 @@ func Call(req Requester) (*RawResponse, error) {
 
 	} else {
 		d := net.Dialer{Timeout: req.GetTimeout()}
-		conn, err = d.Dial("tcp", req.Address())
+		addr := req.Address()
+		conn, err = d.Dial("tcp", addr)
 		if err != nil {
 			return nil, err
 		}

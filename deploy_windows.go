@@ -80,7 +80,6 @@ func (dly *Deploy) withAll(xEnv vela.Environment) {
 	vdns.WithEnv(xEnv)
 	crontab.WithEnv(xEnv)
 	kfk.WithEnv(xEnv)
-	//crack.WithEnv(xEnv)
 	syslog.WithEnv(xEnv)
 	elastic.WithEnv(xEnv)
 	capture.WithEnv(xEnv)

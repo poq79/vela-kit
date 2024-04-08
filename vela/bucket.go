@@ -13,6 +13,7 @@ type Bucket interface {
 	ForEach(func(string, []byte))                           // foreach raw data
 	Count() int                                             // count key
 	Get(string) (interface{}, error)                        //key
+	GetFn(string, func(interface{}) error) error            //Get callback
 	Incr(string, int, int) (int, error)
 	Int(string) int
 	Int64(string) int64

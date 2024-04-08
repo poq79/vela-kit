@@ -27,6 +27,24 @@ func (s Slice) AssertString() (string, bool)       { return "", false }
 func (s Slice) AssertFunction() (*LFunction, bool) { return nil, false }
 func (s Slice) Peek() LValue                       { return s }
 
+func (s Slice) MarshalJSON() ([]byte, error) {
+	n := len(s)
+	if n == 0 {
+		return []byte("[]"), nil
+	}
+	enc := Json(0)
+	enc.Arr("")
+
+	for i := 0; i < n; i++ {
+		enc.Char('"')
+		enc.append(S2B(s[i].String()))
+		enc.Char('"')
+		enc.Char(',')
+	}
+	enc.End("]")
+	return enc.Bytes(), nil
+}
+
 func (s Slice) String() string {
 	n := len(s)
 	if n == 0 {

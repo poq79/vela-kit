@@ -10,7 +10,7 @@ var xEnv vela.Environment
 func Constructor(env vela.Environment) {
 	xEnv = env
 
-	_G = newNode()
-	_G.define(env)
+	ssc = newNode()
+	ssc.define(env)
 	env.Set("node", lua.NewFunction(newLuaNode))
 }

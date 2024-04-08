@@ -76,11 +76,11 @@ func (db *Database) export(ctx *fasthttp.RequestCtx) error {
 
 	switch string(dbname) {
 	case "ssc":
-		bkt := &Bucket{dbx: db, export: "json", chains: [][]byte{bucket}}
+		bkt := &Bucket{dbx: db.ssc, export: "json", chains: [][]byte{bucket}}
 		return write(bkt.String())
 
 	case "ssx":
-		bkt := &Bucket{dbx: db, export: "json", chains: [][]byte{bucket}}
+		bkt := &Bucket{dbx: db.orm.Bolt, export: "json", chains: [][]byte{bucket}}
 		return write(bkt.String())
 	default:
 		return fmt.Errorf("not found db")

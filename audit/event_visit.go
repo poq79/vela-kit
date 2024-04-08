@@ -6,6 +6,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/exception"
 	"github.com/vela-ssoc/vela-kit/kind"
 	"github.com/vela-ssoc/vela-kit/lua"
+	"github.com/vela-ssoc/vela-kit/strutil"
 	"go.uber.org/zap/zapcore"
 	"net"
 	"strconv"
@@ -197,8 +198,16 @@ func (ev *Event) Log() *Event {
 
 	if ev.err == nil {
 		xEnv.Debugf("[%s] [%s] %s %s %s %s %s %s %d %s",
-			ev.level, ev.subject, ev.from, ev.typeof,
-			ev.user, ev.auth, ev.msg, ev.rAddr, ev.rPort, ev.region)
+			strutil.StringOr(ev.level, "-"),
+			strutil.StringOr(ev.subject, "-"),
+			strutil.StringOr(ev.from, "-"),
+			strutil.StringOr(ev.typeof, "-"),
+			strutil.StringOr(ev.user, "-"),
+			strutil.StringOr(ev.auth, "-"),
+			strutil.StringOr(ev.msg, "-"),
+			strutil.StringOr(ev.rAddr, "-"),
+			ev.rPort,
+			strutil.StringOr(ev.region, "-"))
 		//xEnv.Debug(ev.toLine())
 		return ev
 	}
@@ -215,19 +224,19 @@ func (ev *Event) Log() *Event {
 	//	e = ev.err.Error()
 	//}
 	//xEnv.Error(ev.msg, zap.Time("time", ev.time),
-	//	zap.String("node_id", ev.id),
-	//	zap.String("inet", ev.inet),
-	//	zap.String("subject", ev.subject),
-	//	zap.String("remote_addr", ev.rAddr),
+	//	zap.Text("node_id", ev.id),
+	//	zap.Text("inet", ev.inet),
+	//	zap.Text("subject", ev.subject),
+	//	zap.Text("remote_addr", ev.rAddr),
 	//	zap.Int("remote_port", ev.rPort),
-	//	zap.String("region", ev.region),
-	//	zap.String("from", ev.from),
-	//	zap.String("typeof", ev.typeof),
-	//	zap.String("user", ev.user),
-	//	zap.String("auth", ev.auth),
-	//	zap.String("error", e),
+	//	zap.Text("region", ev.region),
+	//	zap.Text("from", ev.from),
+	//	zap.Text("typeof", ev.typeof),
+	//	zap.Text("user", ev.user),
+	//	zap.Text("auth", ev.auth),
+	//	zap.Text("error", e),
 	//	zap.Bool("alert", ev.alert),
-	//	zap.String("level", ev.level))
+	//	zap.Text("level", ev.level))
 	//return ev
 }
 

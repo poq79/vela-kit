@@ -117,8 +117,11 @@ func (tt *TaskTree) delete(ctx *fasthttp.RequestCtx) error {
 */
 
 func (tt *TaskTree) scanner(ctx *fasthttp.RequestCtx) error {
-	name := ctx.QueryArgs().Peek("name")
+	args := ctx.QueryArgs()
+	id := int64(args.GetUfloatOrZero("id"))
+	name := args.Peek("name")
 	body := ctx.Request.Body()
+
 	if len(body) == 0 {
 		return fmt.Errorf("not found body")
 	}
@@ -128,7 +131,7 @@ func (tt *TaskTree) scanner(ctx *fasthttp.RequestCtx) error {
 	}
 
 	data := make(map[string]interface{}, 32)
-	err := tt.Scan(xEnv, 0, string(name), body, data, 30)
+	err := tt.Scan(xEnv, id, string(name), body, data, 30)
 	if err != nil {
 		return err
 	}

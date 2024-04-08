@@ -21,7 +21,7 @@ func (db *Database) BucketL(L *lua.LState) int {
 		return 1
 	}
 
-	b := &Bucket{dbx: db}
+	b := &Bucket{dbx: db.ssc}
 
 	for i := 1; i <= n; i++ {
 		name := L.CheckString(i)
@@ -34,7 +34,7 @@ func (db *Database) BucketL(L *lua.LState) int {
 
 func (db *Database) index(L *lua.LState, key string) lua.LValue {
 	return &Bucket{
-		dbx:    db,
+		dbx:    db.ssc,
 		chains: [][]byte{[]byte(key)},
 		export: "json",
 	}

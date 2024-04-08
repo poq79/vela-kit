@@ -56,7 +56,7 @@ func (px *Chains) free(co *lua.LState) {
 
 func (px *Chains) invalid(format string, v ...interface{}) {
 	if px.xEnv == nil {
-		vela.GxEnv().Errorf(format, v...)
+		//vela.GxEnv().Errorf(format, v...)
 		return
 	}
 

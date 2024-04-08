@@ -3,7 +3,7 @@ package webdav
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/valyala/fasthttp"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"io/fs"

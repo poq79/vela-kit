@@ -6,6 +6,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/strutil"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -196,7 +197,28 @@ func (r RawHttp) Address() string {
 		return r.Peer + ":" + r.Port
 	}
 
-	return r.Host()
+	fnc := func(peer string, scheme string) string {
+		peer = strings.TrimSpace(peer)
+		if r.Scheme == "https" {
+			return peer + ":443"
+		}
+		if r.Scheme == "http" {
+			return peer + ":80"
+		}
+		return peer + ":80"
+	}
+
+	host := r.Host()
+	peer, port, err := net.SplitHostPort(host)
+	if err != nil {
+		return fnc(peer, r.Scheme)
+	}
+
+	if len(port) == 0 {
+		return fnc(peer, r.Scheme)
+	}
+
+	return peer + ":" + port
 }
 
 // Host returns the hostname:port pair to connect to
@@ -234,10 +256,32 @@ func (r *RawHttp) AutoSetHost() {
 	r.AddHeader(fmt.Sprintf("Host: %s", r.Hostname))
 }
 
+func (r *RawHttp) H(key, value string) {
+	key = strings.ToLower(key)
+
+	n := len(r.Headers)
+	for i := 0; i < n; i++ {
+		item := r.Headers[i]
+		p := strings.SplitN(item, ":", 2)
+		if len(p) != 2 {
+			continue
+		}
+		k := strings.ToLower(p[0])
+		if k == key {
+			r.Headers[i] = fmt.Sprintf("%s: %s", key, value)
+			return
+		}
+	}
+
+	r.AddHeader(fmt.Sprintf("%s: %s", key, value))
+}
+
 // AutoSetContentLength adds a Content-Length header
 // to the request with the length of Request.Body as the value
 func (r *RawHttp) AutoSetContentLength() {
-	r.AddHeader(fmt.Sprintf("Content-Length: %d", len(r.Body)))
+	if n := len(r.Body); n >= 0 {
+		r.H("Content-Length", strconv.Itoa(n))
+	}
 }
 
 // fullPath returns the path including query string and fragment

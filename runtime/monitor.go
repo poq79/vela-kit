@@ -3,9 +3,9 @@ package runtime
 import (
 	"container/ring"
 	"fmt"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"gopkg.in/tomb.v2"
@@ -134,7 +134,7 @@ func (m *monitor) AgentAlloc() {
 	runtime.ReadMemStats(&info)
 
 	if info.Alloc > m.Memory {
-		audit.Errorf("memory overflow %d > %d", info.Alloc, m.Memory).From("runtime").Log().Put()
+		//audit.Errorf("memory overflow %d > %d", info.Alloc, m.Memory).From("runtime").Log().Put()
 		debug.FreeOSMemory()
 	}
 }
@@ -265,23 +265,57 @@ func (m *monitor) Chance(r *ring.Ring, e float64, h float64) bool { // 120次 , 
 }
 
 func (m *monitor) exec() bool {
+	shmCpu := xEnv.Shm("SHM-RUNTIME-CPU", "OVERFLOW")
+	shmMem := xEnv.Shm("SHM-RUNTIME-MEM", "OVERFLOW")
 
-	if m.Chance(rb.agent.cpu, 20, 0.7) {
-		audit.Errorf("agent.cpu overflow  2min").From("runtime").Log().Put()
+	if m.Chance(rb.agent.cpu, 20, 0.9) {
+		if n, _ := shmCpu.Incr("cpu.alert", 1, 3600); n > 1 {
+			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log().Put()
+		} else {
+			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log()
+		}
 		m.Decision()
 	}
 
-	if m.Chance(rb.agent.mem, float64(Min), 0.8) {
-		audit.Errorf("agent.mem overflow 150M 2min").From("runtime").Log().Put()
+	if m.Chance(rb.agent.mem, float64(Min), 0.9) {
+		if n, _ := shmMem.Incr("cpu.alert", 1, 3600); n > 1 {
+			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log().Put()
+		} else {
+			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log()
+		}
 		m.Decision()
 	}
 
 	return false
 }
 
+func (m *monitor) uptime() time.Duration {
+	return time.Duration(m.counter) * time.Second * 5
+}
+
+func (m *monitor) clean() {
+	fact := 86400 * time.Second
+
+	if m.counter <= 1 {
+		goto Handle
+
+	}
+
+	if m.uptime()%fact != 0 {
+		return
+	}
+
+Handle:
+	cli := xEnv.R().Cli()
+	_, _ = cli.Get("/clean/agent/logger?space=1073741824")    //1G
+	_, _ = cli.Get("/clean/audit/logger?space=524288000")     //500M
+	_, _ = cli.Get("/clean/agent/executable?space=524288000") //50M
+}
+
 func (m *monitor) task() {
 	tk := time.NewTicker(5 * time.Second)
-	defer tk.Stop()
+	tk.Stop()
+
 	for {
 		select {
 		case <-m.tomb.Dying():
@@ -294,6 +328,7 @@ func (m *monitor) task() {
 			//m.Cpu()
 			m.Mem()
 			m.exec()
+			m.clean()
 		}
 	}
 

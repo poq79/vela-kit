@@ -3,6 +3,7 @@ package vela
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 )
 
 type EncodeFunc func(interface{}) ([]byte, error)
@@ -21,6 +22,16 @@ func BinaryEncode(v interface{}) ([]byte, error) {
 
 func BinaryDecode(data []byte) (interface{}, error) {
 	return data, nil
+}
+
+func JsonEncode(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+func JsonDecode(data []byte) (interface{}, error) {
+	var v interface{}
+	err := json.Unmarshal(data, &v)
+	return v, err
 }
 
 type MimeByEnv interface {

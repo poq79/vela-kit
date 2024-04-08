@@ -180,13 +180,13 @@ func (tt *TaskTree) reg(id int64, cname string, chunk []byte, env vela.Environme
 	if co == nil {
 		co, code = newCodeVM(cname, chunk, env, way)
 		tt.insert(cname, co)
-		newCodeEv(code, "添加服务").Msg("%tt 注册成功", cname)
+		newCodeEv(code, "添加服务").Msg("%s 注册成功", cname)
 		goto done
 	}
 
 	code.ToUpdate()
 	code.Update(co, chunk, env, way)
-	newCodeEv(code, "更新服务").Msg("%tt 注册成功", cname)
+	newCodeEv(code, "更新服务").Msg("%s 注册成功", cname)
 
 done:
 	code.header.id = id

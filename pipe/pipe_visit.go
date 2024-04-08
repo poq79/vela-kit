@@ -4,7 +4,7 @@ import (
 	"fmt"
 	auxlib "github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
-	lvalue "github.com/vela-ssoc/vela-kit/reflectx"
+	refletx "github.com/vela-ssoc/vela-kit/reflectx"
 	"github.com/vela-ssoc/vela-kit/vela"
 	"io"
 )
@@ -44,6 +44,8 @@ func (px *Chains) LValue(lv lua.LValue) {
 		fn := px.LFuncInt(lv.Peek().(lua.GoFuncInt))
 		px.append(fn)
 	case lua.LTGoFunction:
+		fn := px.GoFunc(lv.Peek().(lua.GoFunction))
+		px.append(fn)
 
 	case lua.LTFunction:
 		px.append(px.LFunc(lv.Peek().(*lua.LFunction)))
@@ -69,7 +71,6 @@ func (px *Chains) Preprocess(v interface{}) Fn {
 
 	case *lua.LFunction:
 		return px.LFunc(item)
-
 	case lua.Console:
 		return px.Console(item)
 	case Call:
@@ -108,6 +109,12 @@ func (px *Chains) Preprocess(v interface{}) Fn {
 	return nil
 }
 
+func (px *Chains) GoFunc(fn lua.GoFunction) Fn {
+	return func(v ...interface{}) error {
+		return fn()
+	}
+}
+
 func (px *Chains) LFuncErr(fn lua.GoFuncErr) Fn {
 	return func(v ...interface{}) error {
 		return fn(v...)
@@ -139,18 +146,18 @@ func (px *Chains) LFunc(fn *lua.LFunction) Fn {
 		L, ok := v[size-1].(*lua.LState)
 		if ok {
 			co = px.clone(L)
-			v = v[:size-1]
+			size = size - 1
 		}
 		cp := px.xEnv.P(fn)
 
-		var args []lua.LValue
-		for _, item := range v {
-			args = append(args, lvalue.ToLValue(item, co))
+		args := make([]lua.LValue, size)
+		for i := 0; i < size; i++ {
+			args[i] = refletx.ToLValue(v[i], co)
 		}
 		defer px.xEnv.Free(co)
 
 		if len(args) == 0 {
-			return fmt.Errorf("xreflect to LValue fail %v", v)
+			return fmt.Errorf("reflectx to LValue fail %v", v)
 		}
 
 		return co.CallByParam(cp, args...)

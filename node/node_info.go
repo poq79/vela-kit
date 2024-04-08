@@ -5,10 +5,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/valyala/fasthttp"
 	vruntime "github.com/vela-ssoc/vela-kit/runtime"
 )

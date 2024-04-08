@@ -1,7 +1,7 @@
 package inode
 
 import (
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"os"
 	"strconv"

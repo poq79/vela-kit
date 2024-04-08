@@ -35,17 +35,6 @@ func Select(key string, size int, reverse bool) ([]byte, error) {
 
 }
 
-/*
-func helper(key string, ctx *fasthttp.RequestCtx) error {
-	chunk, err := Select(key, Size(ctx, 100), true)
-	if err != nil {
-		return err
-	}
-	ctx.Write(chunk)
-	return nil
-}
-*/
-
 func helper(r *ring.Ring, ctx *fasthttp.RequestCtx) error {
 	var result []interface{}
 	r.Do(func(v interface{}) {

@@ -20,7 +20,7 @@ import (
 //
 // Boolean values are converted to lua.LBool.
 //
-// String values are converted to lua.LString.
+// Text values are converted to lua.LString.
 //
 // Real numeric values (ints, uints, and floats) are converted to lua.LNumber.
 //

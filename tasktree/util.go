@@ -8,21 +8,35 @@ import (
 )
 
 func newCodeEv(c *Code, sub string) *audit.Event {
-	return audit.NewEvent("task").Subject(sub).From(c.Key()).Alert()
+	return audit.NewEvent("task").Subject(sub).From(c.Key())
 }
 
-func in(k string, s []string) bool {
-	if len(s) == 0 {
+func in[T comparable](v T, elems []T) bool {
+	n := len(elems)
+	if n == 0 {
 		return false
 	}
 
-	for _, item := range s {
-		if k == item {
+	for i := 0; i < n; i++ {
+		if v == elems[i] {
 			return true
 		}
 	}
 	return false
 }
+
+//func in(k string, s []string) bool {
+//	if len(s) == 0 {
+//		return false
+//	}
+//
+//	for _, item := range s {
+//		if k == item {
+//			return true
+//		}
+//	}
+//	return false
+//}
 
 func CheckCodeVM(L *lua.LState) (*Code, bool) {
 	cname := L.CodeVM()

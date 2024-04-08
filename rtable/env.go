@@ -9,17 +9,13 @@ import (
 
 var xEnv vela.Environment
 
-/*
-vela.router.GET("/api/v1/arr/" , "hhlo")
-
-*/
-
 func (trr *TnlRouter) indexL(L *lua.LState, key string) lua.LValue {
 	switch key {
 	case "GET", "POST", "PUT", "PATCH":
 		return trr.newHandleL(L, key)
-	case "call":
-		return lua.NewFunction(trr.callL)
+	case "client":
+		cli := &Client{rTab: trr}
+		return cli
 	}
 
 	return lua.LNil

@@ -86,6 +86,7 @@ func with(env *Environment) {
 	env.Set("addr", lua.NewFunction(env.addrL))
 	env.Set("arch", lua.NewFunction(env.archL))
 	env.Set("prefix", lua.S2L(env.ExecDir()))
+	env.Set("once", lua.NewFunction(env.OnceL))
 
 	env.Set("tunnel",
 		lua.NewExport("lua.tunnel.export",

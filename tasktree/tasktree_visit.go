@@ -22,7 +22,8 @@ func (tt *TaskTree) Wakeup(way vela.Way) error {
 		ev.Subject("唤醒服务失败").E(err).High().Alert().Put()
 		return err
 	}
-	ev.Subject("唤醒服务成功").Notice().Alert().Put()
+	ev.Subject("唤醒服务成功").Notice().Alert().Log()
+	//ev.Subject("唤醒服务成功").Notice().Alert().Put()
 	return nil
 }
 
