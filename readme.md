@@ -25,8 +25,8 @@ func main() {
     
 	//调试
     deploy.Debug(kit.Hide{
-        Lan:      []string{"ws://172.31.61.168:8082"},
-        Hostname: "vela-ssoc.eastmoney.com",
+        Lan:      []string{"ws://1.1.1.1:8082"},
+        Hostname: "vela.site.com",
         Edition:  "2.2.0",
         Protect:  true,
     })
