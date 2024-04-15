@@ -14,7 +14,7 @@ func Constructor(env vela.Environment, callback func(v interface{}) error) {
 	m := &monitor{
 		tomb:     new(tomb.Tomb),
 		Memory:   Min,
-		CPU:      80,
+		Cpu:      80,
 		AgentMem: uint(Min),
 		AgentCpu: uint(15),
 	}

@@ -49,7 +49,7 @@ type monitor struct {
 	counter  uint32
 	tomb     *tomb.Tomb
 	Memory   uint64
-	CPU      uint
+	Cpu      uint
 	CPUTimes []cpu.TimesStat
 	AgentCpu uint
 	AgentMem uint
@@ -164,28 +164,36 @@ func (m *monitor) store(key string, v float64) {
 }
 
 // 弃用, 系统时间计算和Agent时间一起算, 在agent()函数中实现
-//func (m *monitor) Cpu() {
-//	t2, err := cpu.Times(false)
-//	if err != nil {
-//		return
+//
+//	func (m *monitor) Cpu() {
+//		t2, err := cpu.Times(false)
+//		if err != nil {
+//			return
+//		}
+//
+//		t1 := m.CPUTimes
+//		m.CPUTimes = t2
+//
+//		if len(t1) == 0 {
+//			return
+//		}
+//
+//		ret, err := CalculateAllBusy(t1, t2)
+//		if err != nil {
+//			xEnv.Errorf("calculate cpu fail %v", err)
+//			return
+//		}
+//
+//		//xEnv.Errorf("cpu avg:%v    max:%v    usage:%v", avg(ret), max(ret), ret)
+//		m.store("os.cpu", ret[0])
 //	}
-//
-//	t1 := m.CPUTimes
-//	m.CPUTimes = t2
-//
-//	if len(t1) == 0 {
-//		return
-//	}
-//
-//	ret, err := CalculateAllBusy(t1, t2)
-//	if err != nil {
-//		xEnv.Errorf("calculate cpu fail %v", err)
-//		return
-//	}
-//
-//	//xEnv.Errorf("cpu avg:%v    max:%v    usage:%v", avg(ret), max(ret), ret)
-//	m.store("os.cpu", ret[0])
-//}
+func (m *monitor) CPU() float64 {
+	return latestCpuPct
+}
+
+func (m *monitor) AgentCPU() float64 {
+	return latestProcessCpuPct
+}
 
 func (m *monitor) Mem() {
 	mi, err := mem.VirtualMemory()
@@ -314,7 +322,7 @@ Handle:
 
 func (m *monitor) task() {
 	tk := time.NewTicker(5 * time.Second)
-	tk.Stop()
+	defer tk.Stop()
 
 	for {
 		select {
