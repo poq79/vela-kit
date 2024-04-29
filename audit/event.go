@@ -1,6 +1,8 @@
 package audit
 
 import (
+	"fmt"
+	"github.com/vela-ssoc/vela-kit/lua"
 	"time"
 )
 
@@ -54,4 +56,11 @@ func Infof(format string, v ...interface{}) *Event {
 
 func Debug(format string, v ...interface{}) *Event {
 	return NewEvent("logger").Subject("调试信息").Msg(format, v...).From("vela-inline")
+}
+
+func Console(L *lua.LState, format string, v ...interface{}) *Event {
+	line := L.Where(1)
+	ev := NewEvent("logger").Subject("调试信息").From(L.CodeVM())
+	ev.msg = "[" + line[:len(line)-1] + "] " + fmt.Sprintf(format, v...)
+	return ev
 }
