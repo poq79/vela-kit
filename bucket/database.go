@@ -21,19 +21,6 @@ type Database struct {
 	shm        *bbolt.DB
 }
 
-func NewDatabase() *Database {
-	db := &Database{
-		opt: &bbolt.Options{
-			Timeout:      0,
-			NoGrowSync:   false,
-			NoSync:       true,
-			FreelistType: bbolt.FreelistMapType,
-		},
-	}
-	db.open()
-	return db
-}
-
 func (db *Database) walk(name string) string {
 	dir := xEnv.ExecDir()
 	pattern := dir + fmt.Sprintf("/%s*.db", name)
