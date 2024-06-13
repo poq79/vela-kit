@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"github.com/elastic/gosigar"
+	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"os"
 	"runtime"
@@ -50,6 +51,54 @@ func setMaxThreadL(L *lua.LState) int {
 	}
 
 	debug.SetMaxThreads(n)
+	return 0
+}
+
+func setAgentCpuAlarmL(L *lua.LState) int {
+	Times := L.IsInt(1)
+	TValue := float64(L.CheckNumber(2))
+	TPercent := float64(L.CheckNumber(3))
+	AlarmCache := L.IsInt(4)
+	AlarmInterval := L.IsInt(5)
+
+	if Times > 0 {
+		AgentAlarmCfg.Cpu.Times = Times
+	}
+	AgentAlarmCfg.Cpu.TValue = TValue
+	if TPercent > 0 && TPercent <= 1 {
+		AgentAlarmCfg.Cpu.TPercent = TPercent
+	}
+	if AlarmCache > 0 {
+		AgentAlarmCfg.Cpu.AlarmCache = AlarmCache
+	}
+	if AlarmInterval > 0 {
+		AgentAlarmCfg.Cpu.AlarmInterval = AlarmInterval
+	}
+	audit.Errorf("setAgentCpuAlarm...%s", AgentAlarmCfg.Cpu.Tojson()).From("runtime").Log().Put()
+	return 0
+}
+
+func setAgentMemAlarmL(L *lua.LState) int {
+	Times := L.IsInt(1)
+	TValue := float64(L.CheckNumber(2))
+	TPercent := float64(L.CheckNumber(3))
+	AlarmCache := L.IsInt(4)
+	AlarmInterval := L.IsInt(5)
+
+	if Times > 0 {
+		AgentAlarmCfg.Mem.Times = Times
+	}
+	AgentAlarmCfg.Mem.TValue = TValue
+	if TPercent > 0 && TPercent <= 1 {
+		AgentAlarmCfg.Mem.TPercent = TPercent
+	}
+	if AlarmCache > 0 {
+		AgentAlarmCfg.Mem.AlarmCache = AlarmCache
+	}
+	if AlarmInterval > 0 {
+		AgentAlarmCfg.Mem.AlarmInterval = AlarmInterval
+	}
+	audit.Errorf("setAgentMemAlarm...%s", AgentAlarmCfg.Mem.Tojson()).From("runtime").Log().Put()
 	return 0
 }
 

@@ -28,6 +28,9 @@ func Constructor(env vela.Environment, callback func(v interface{}) error) {
 
 	rtv.Set("max_memory", lua.NewFunction(setMaxMemoryL))
 	rtv.Set("max_thread", lua.NewFunction(setMaxThreadL))
+	rtv.Set("agent_cpu_alarm", lua.NewFunction(setAgentCpuAlarmL))
+	rtv.Set("agent_mem_alarm", lua.NewFunction(setAgentMemAlarmL))
+
 	rtv.Set("max_cpu", lua.NewFunction(setMaxCpuL))
 	rtv.Set("memory", lua.NewFunction(memoryL))
 	rtv.Set("p_memory", lua.NewFunction(pMemoryL))

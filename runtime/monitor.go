@@ -8,6 +8,8 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/lua"
+	risk "github.com/vela-ssoc/vela-risk"
+	vtag "github.com/vela-ssoc/vela-tag"
 	"gopkg.in/tomb.v2"
 	"os"
 	"runtime"
@@ -56,6 +58,40 @@ type monitor struct {
 	State    Cache
 	Day      int
 	Action   string
+}
+
+type agentAlarmCfg struct {
+	Cpu alarmCfg `json:"Cpu"`
+	Mem alarmCfg `json:"Mem"`
+}
+type alarmCfg struct {
+	// Times tValue tPercent
+	Times         int     `json:"Times"`         //往前取多少次数据
+	TValue        float64 `json:"TValue"`        //告警阈值
+	TPercent      float64 `json:"TPercent"`      //达到阈值的百分比
+	AlarmCache    int     `json:"AlarmCache"`    //告警计数器缓存的时间(秒)
+	AlarmInterval int     `json:"AlarmInterval"` //告警间隔 如10次则是连续10次告警才上传告警一次
+}
+
+func (a alarmCfg) Tojson() string {
+	return fmt.Sprintf(`{"Times":%d,"TValue":%f,"TPercent":%f,"AlarmCache":%d,"Alarm Interval":%d}`, a.Times, a.TValue, a.TPercent, a.AlarmCache, a.AlarmInterval)
+}
+
+var AgentAlarmCfg = agentAlarmCfg{
+	Cpu: alarmCfg{
+		Times:         24,
+		TValue:        20,
+		TPercent:      0.9,
+		AlarmCache:    3600,
+		AlarmInterval: 120,
+	},
+	Mem: alarmCfg{
+		Times:         24,
+		TValue:        float64(Min),
+		TPercent:      0.9,
+		AlarmCache:    3600,
+		AlarmInterval: 120,
+	},
 }
 
 func (m *monitor) Index(L *lua.LState, key string) lua.LValue {
@@ -241,55 +277,80 @@ func (m *monitor) inc() {
 	atomic.AddUint32(&m.counter, 1)
 }
 
-func (m *monitor) Chance(r *ring.Ring, e float64, h float64) bool { // 120次 , 90次 , 0.8
+// Chance 监控告警触发器  最近的times次采集数据中有tPercent的比例的数据大于tValue, 返回true
+func (m *monitor) Chance(r *ring.Ring, times int, tValue float64, tPercent float64) bool { // 120次 , 90次 , 0.8
 
 	var total int
 	var exceed int
-	r.Do(func(a interface{}) {
-		if a == nil {
-			return
-		}
 
-		entry, ok := a.(*Record)
+	// 往前回溯times次数据
+	for p := r.Prev(); p != r && total < times; p = p.Prev() {
+		if p.Value == nil {
+			break
+		}
+		entry, ok := p.Value.(*Record)
 		if !ok {
-			return
+			break
 		}
 		total++
 
-		if entry.Value >= e {
+		if entry.Value >= tValue {
 			exceed++
 		}
-	})
-
-	if total < 120 {
-		return false
 	}
 
-	if float64(exceed)/float64(total) > h {
+	if total < times {
+		return false
+	}
+	if float64(exceed)/float64(total) > tPercent {
 		return true
 	}
 
 	return false
 }
 
+// agent自身资源占用监控告警
 func (m *monitor) exec() bool {
-	shmCpu := xEnv.Shm("SHM-RUNTIME-CPU", "OVERFLOW")
-	shmMem := xEnv.Shm("SHM-RUNTIME-MEM", "OVERFLOW")
+	shmCpu := xEnv.Shm("SHM-RUNTIME-AGENT-CPU", "OVERFLOW")
+	shmMem := xEnv.Shm("SHM-RUNTIME-AGENT-MEM", "OVERFLOW")
+	t := vtag.NewTag()
 
-	if m.Chance(rb.agent.cpu, 20, 0.9) {
-		if n, _ := shmCpu.Incr("cpu.alert", 1, 3600); n > 1 {
-			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log().Put()
+	// 默认 24*5秒=120秒
+	if m.Chance(rb.agent.cpu, AgentAlarmCfg.Cpu.Times, AgentAlarmCfg.Cpu.TValue, AgentAlarmCfg.Cpu.TPercent) {
+		if n, _ := shmCpu.Incr("acpu.alert", 1, AgentAlarmCfg.Cpu.AlarmCache*1000); n > 1 {
+			if n%AgentAlarmCfg.Cpu.AlarmInterval == 0 {
+				audit.Errorf("agent.cpu overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n).From("runtime").Log().Put()
+				rev := risk.Monitor()
+				rev.Metadata = make(map[string]lua.LValue)
+				rev.FromCode = "runtime"
+				rev.Metadata["config"] = lua.S2L(AgentAlarmCfg.Cpu.Tojson())
+				rev.Subject = "agent.cpu overflow"
+				rev.Payload = fmt.Sprintf("agent.cpu overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n)
+				rev.Send()
+			}
 		} else {
-			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log()
+			audit.Errorf("agent.cpu overflow %ds", AgentAlarmCfg.Mem.Times*5).From("runtime").Log().Alert().Put()
+			t.AddTag("acpu_overflow")
+			t.Send()
 		}
 		m.Decision()
 	}
-
-	if m.Chance(rb.agent.mem, float64(Min), 0.9) {
-		if n, _ := shmMem.Incr("cpu.alert", 1, 3600); n > 1 {
-			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log().Put()
+	if m.Chance(rb.agent.mem, AgentAlarmCfg.Mem.Times, AgentAlarmCfg.Mem.TValue, AgentAlarmCfg.Mem.TPercent) {
+		if n, _ := shmMem.Incr("amem.alert", 1, AgentAlarmCfg.Mem.AlarmCache*1000); n > 1 {
+			if n%AgentAlarmCfg.Mem.AlarmInterval == 0 {
+				audit.Errorf("agent.mem overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Mem.Times*5, AgentAlarmCfg.Mem.AlarmCache, n).From("runtime").Log().Put()
+				rev := risk.Monitor()
+				rev.Metadata = make(map[string]lua.LValue)
+				rev.FromCode = "runtime"
+				rev.Metadata["config"] = lua.S2L(AgentAlarmCfg.Cpu.Tojson())
+				rev.Subject = "agent.mem overflow"
+				rev.Payload = fmt.Sprintf("agent.mem overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Mem.Times*5, AgentAlarmCfg.Mem.AlarmCache, n)
+				rev.Send()
+			}
 		} else {
-			audit.Errorf("agent.cpu overflow 2min").From("runtime").Log()
+			audit.Errorf("agent.mem overflow %ds", AgentAlarmCfg.Mem.Times*5).From("runtime").Log().Alert().Put()
+			t.AddTag("amem_overflow")
+			t.Send()
 		}
 		m.Decision()
 	}

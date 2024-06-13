@@ -170,11 +170,18 @@ func (env *Environment) Worker() {
 }
 
 func (env *Environment) Dev(lan string, vip string, edit string, host string) {
-
-	tnl, err := tunnel.Dial(env.Context(), definition.MHide{
+	hide := definition.MHide{
 		Addrs:      []string{lan},
 		Servername: host,
-	}, env.router.H2S(), tunnel.WithLogger(env), tunnel.WithInterval(time.Second*30), tunnel.WithNotifier(env))
+		Semver:     edit,
+	}
+	opts := []tunnel.Option{
+		tunnel.WithLogger(env),
+		tunnel.WithInterval(time.Second * 30),
+		tunnel.WithNotifier(env),
+	}
+
+	tnl, err := tunnel.Dial(env.Context(), hide, env.router.H2S(), opts...)
 
 	if err != nil {
 		env.Errorf("vela minion tunnel v2 connect fail %v", err)
