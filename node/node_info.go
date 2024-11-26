@@ -10,6 +10,7 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/valyala/fasthttp"
+	vdisk "github.com/vela-ssoc/vela-disk"
 	vruntime "github.com/vela-ssoc/vela-kit/runtime"
 )
 
@@ -44,6 +45,7 @@ type Info struct {
 	AgentAlloc   uint64                  `json:"agent_alloc"`
 	AgentMem     *process.MemoryInfoStat `json:"agent_mem"`
 	AgentCPU     float64                 `json:"agent_cpu"`
+	Disk         []vdisk.Disk            `json:"disk_info"`
 }
 
 func (i *Info) Byte() []byte {
@@ -86,7 +88,7 @@ func (i *Info) Agt() error {
 	if err != nil {
 		return err
 	}
-	//cpu, err := agt.CPUPercent()
+	// cpu, err := agt.CPUPercent()
 	// 实时请求的接口,采集时间不固定, 就不单独做一次采集了, 直接读历史数据(5秒内)
 	// 本来就不准, 而且还干扰正常定时采集的数据
 	systemCpuUsage, currentProcessCpuUsage, err := vruntime.GetCurrentProcessCPUpctLatest()
@@ -114,6 +116,21 @@ func (i *Info) Agt() error {
 	return nil
 }
 
+func (i *Info) DiskInfo(diskSum *vdisk.Summary) error {
+	if diskSum == nil {
+		diskSum = vdisk.New()
+	}
+
+	diskSum.Update()
+	for n := 0; n < len(diskSum.Device); n++ {
+		if vdisk.IsIgnorePartition(diskSum.Device[n]) {
+			continue
+		}
+		i.Disk = append(i.Disk, *diskSum.Device[n])
+	}
+	return nil
+}
+
 func (i *Info) Swap() error {
 	swap, err := mem.SwapMemory()
 	if err != nil {
@@ -131,6 +148,7 @@ func (i *Info) Swap() error {
 func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 	ident := xEnv.Ident()
 	hi, err := host.Info()
+	diskSum := vdisk.New()
 	if err != nil {
 		return err
 	}
@@ -161,7 +179,7 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 		xEnv.Errorf("node swap info got fail %v", e)
 	}
 
-	// Agt()里面集成了系统cpu监控
+	// Agt()里面集成了系统cpu资源占用监控, 这里获取的是cpu硬件基础信息
 	if e := v.Cpu(); e != nil {
 		xEnv.Errorf("node cpu info got fail %v", e)
 	}
@@ -170,6 +188,9 @@ func (nd *node) Info(ctx *fasthttp.RequestCtx) error {
 		xEnv.Errorf("node agent info got fail %v", e)
 	}
 
+	if e := v.DiskInfo(diskSum); e != nil {
+		xEnv.Errorf("node disk info got fail %v", e)
+	}
 	ctx.Write(v.Byte())
 	return nil
 }

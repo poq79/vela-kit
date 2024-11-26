@@ -73,6 +73,8 @@ type alarmCfg struct {
 	AlarmInterval int     `json:"AlarmInterval"` //告警间隔 如10次则是连续10次告警才上传告警一次
 }
 
+// 往前追溯Times个监控周期内 有TPercent的agentcpu占用数据大于TValue%,则产生告警
+// 但是在AlarmCache秒内每产生AlarmInterval次才上传告警一次
 func (a alarmCfg) Tojson() string {
 	return fmt.Sprintf(`{"Times":%d,"TValue":%f,"TPercent":%f,"AlarmCache":%d,"Alarm Interval":%d}`, a.Times, a.TValue, a.TPercent, a.AlarmCache, a.AlarmInterval)
 }
@@ -319,13 +321,13 @@ func (m *monitor) exec() bool {
 	if m.Chance(rb.agent.cpu, AgentAlarmCfg.Cpu.Times, AgentAlarmCfg.Cpu.TValue, AgentAlarmCfg.Cpu.TPercent) {
 		if n, _ := shmCpu.Incr("acpu.alert", 1, AgentAlarmCfg.Cpu.AlarmCache*1000); n > 1 {
 			if n%AgentAlarmCfg.Cpu.AlarmInterval == 0 {
-				audit.Errorf("agent.cpu overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n).From("runtime").Log().Put()
+				audit.Errorf("agent.cpu overflow %ds (last %ds alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n).From("runtime").Log().Put()
 				rev := risk.Monitor()
 				rev.Metadata = make(map[string]lua.LValue)
 				rev.FromCode = "runtime"
 				rev.Metadata["config"] = lua.S2L(AgentAlarmCfg.Cpu.Tojson())
 				rev.Subject = "agent.cpu overflow"
-				rev.Payload = fmt.Sprintf("agent.cpu overflow %ds (last %ss alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n)
+				rev.Payload = fmt.Sprintf("agent.cpu overflow %ds (last %ds alert times:%d)", AgentAlarmCfg.Cpu.Times*5, AgentAlarmCfg.Cpu.AlarmCache, n)
 				rev.Send()
 			}
 		} else {
