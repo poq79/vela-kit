@@ -68,8 +68,8 @@ func (db *Database) open() {
 
 	path = db.walk(".ssx")
 	orm, err := storm.Open(path, storm.BoltOptions(0600, db.opt))
-	orm.WithCodec(codec.Sonic{})
 	exception.Fatal(err)
+	orm.WithCodec(codec.Sonic{})
 	db.orm = orm
 
 	//新建数据存储

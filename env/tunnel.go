@@ -174,6 +174,7 @@ func (env *Environment) Dev(lan string, vip string, edit string, host string) {
 		Addrs:      []string{lan},
 		Servername: host,
 		Semver:     edit,
+		Customized: "local_debug",
 	}
 	opts := []tunnel.Option{
 		tunnel.WithLogger(env),

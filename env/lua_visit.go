@@ -20,7 +20,7 @@ type Once struct {
 func (env *Environment) OnceL(L *lua.LState) int {
 	key := L.CheckString(1)
 	if e := strutil.Name(key); e != nil {
-		L.RaiseError("once %v", e)
+		L.RaiseError("[vela-once] check name ERR: %v", e)
 		return 0
 	}
 
@@ -36,18 +36,23 @@ func (env *Environment) OnceL(L *lua.LState) int {
 		chain.Do(ud, L, func(err error) {
 			L.RaiseError("%v", err)
 		})
-		_ = bkt.Store(key, true, 0)
+		err := bkt.Store(key, ov, 0)
+		if err != nil {
+			env.Errorf("[vela-once] bkt.Store ERROR:%s \n", err)
+		}
 		L.Push(ud)
 		return 1
 	}
 
 	val, err := bkt.Get(key)
 	if err != nil {
+		env.Errorf("[vela-once] bkt.Get ERROR:%s \n", err)
 		return handle(&Once{time.Now(), key})
 	}
 
 	ov, ok := val.(*Once)
 	if !ok {
+		env.Errorf("[vela-once] val.(*Once) ERROR:% \n", err)
 		return handle(&Once{time.Now(), key})
 	}
 

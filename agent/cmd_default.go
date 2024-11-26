@@ -190,7 +190,7 @@ func executable(output *stdutil.Output) string {
 		output.ERR(`msg:ssc %s binary decode error %v`, exe, e)
 		return ""
 	} else {
-		output.ERR(`msg:ssc %s binary code succeed`, hi)
+		output.Info(`msg:ssc %s binary code succeed`, hi)
 		return exe
 	}
 }
